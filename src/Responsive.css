@@ -1,0 +1,10 @@
+@media screen and (max-width: 990px) {
+    /*=================================Login=================================*/
+    .auth-page{
+        padding-right: 0;
+    }
+
+    .auth-page img{
+        display: none;
+    }
+}
