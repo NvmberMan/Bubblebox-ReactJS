@@ -1,14 +1,40 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import bunny from "../Assets/Img/Application/bunny-ballon2.png";
+import { hit_login } from "../Api";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
+  let win = sessionStorage;
+  const [Password, SetPassword] = useState("");
+  const [Email, SetEmail] = useState("");
+  const [AlertError, SetAlertError] = useState("");
+  const navigate = useNavigate();
+
+  const LoginButton = (e) => {
+    e.preventDefault();
+
+    hit_login(Email, Password)
+      .then((data) => {
+        win.setItem("token", data.data.token);
+
+        navigate("/")
+
+      })
+      .catch((err) => {
+        console.log(err.response);
+        SetAlertError(err.response.data.message);
+        console.log(AlertError)
+      });
+
+  };
 
 
-    const LoginButton = (e) => {
-        e.preventDefault();
-
-        window.location = '/';
+  useEffect(() => {
+    if (win.getItem("token")) {
+      window.location = "/";
+      
     }
+  }, [win]);
 
   return (
     <div>
@@ -20,16 +46,31 @@ function Login() {
               <h1>Welcome Back!</h1>
               <p>We’re so excited to see you again!</p>
             </div>
+            {AlertError !== "" ? (
+              <div className="alert-form success">
+                <p>{AlertError}</p>
+              </div>
+            ) : (
+              <div></div>
+            )}
             <div className="alert-form danger hidden">
-                <p>Invalid username or password</p>
+              <p>Invalid username or password</p>
             </div>
             <div className="input-form">
               <label htmlFor="email">EMAIL</label>
-              <input type="email" id="email" />
+              <input
+                onChange={(e) => SetEmail(e.target.value)}
+                type="email"
+                id="email"
+              />
             </div>
             <div className="input-form">
               <label htmlFor="password">PASSWORD</label>
-              <input type="password" id="password" />
+              <input
+                onChange={(e) => SetPassword(e.target.value)}
+                type="password"
+                id="password"
+              />
             </div>
             <a href="/">Reset Password?</a>
             <div className="input-form button">

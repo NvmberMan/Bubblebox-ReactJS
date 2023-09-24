@@ -1,4 +1,4 @@
-import {React, useEffect, useState} from "react";
+import { React, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
@@ -8,15 +8,20 @@ import { faEllipsisV } from "@fortawesome/free-solid-svg-icons";
 import { faPaperPlane as faPlane } from "@fortawesome/free-solid-svg-icons";
 import adventure from "../Assets/Img/Application/adventure.png";
 import weather from "../Assets/Img/Application/weather.png";
+import { hit_createServer, hit_getAllServer, hit_leaveServer, hit_logout } from "../Api";
 
 function Home() {
-  let [choosen, setChoosen] = useState();
-  let [join, setJoin] = useState();
-  let [create, setCreate] = useState();
-  let [discover, setDiscover] = useState();
-  let [detail, setDetail] = useState();
-  // let imgDummy =
-  //   "https://d1vbn70lmn1nqe.cloudfront.net/prod/wp-content/uploads/2021/10/28064854/12.-Tips-Merawat-Anak-Kucing-Munchkin.jpg";
+  let win = sessionStorage;
+  const [AlertError, SetAlertError] = useState("");
+  let [userData, setUserData] = useState({
+    user_name: "",
+    server_data: [
+      {
+        image_url: "",
+      },
+    ],
+  });
+
   const chatData = [
     {
       id: 1,
@@ -76,55 +81,159 @@ function Home() {
     },
   ];
 
-  function OpenChoosen(){
+  useEffect(() => {
+    setChoosen(document.getElementById("choosen"));
+    setJoin(document.getElementById("join"));
+    setCreate(document.getElementById("create"));
+    setDiscover(document.getElementById("discover"));
+    setDetail(document.getElementById("detail"));
+
+    if (!win.getItem("token")) {
+      window.location = "/login";
+    } else {
+      const hit = hit_getAllServer(win.getItem("token"));
+
+      hit
+        .then((data) => {
+          console.log(data.data);
+          setUserData(data.data);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }, [win]);
+
+  //---------------------------------------------------------------------------------Create Server
+  const [ServerName, SetServerName] = useState("");
+  const [ServerTagLine, SetServerTagLine] = useState("");
+  const [ServerDescription, SetServerDescription] = useState("");
+  function CreateServer() {
+    hit_createServer(
+      win.getItem("token"),
+      ServerName,
+      ServerTagLine,
+      ServerDescription
+    )
+      .then((data) => {
+        //salind sever data
+        const currentData = [...userData.server_data];
+
+        // Tambahkan data baru ke dalam currentData
+        currentData.push(data.data.data);
+
+        // Update state dengan data yang sudah diperbarui
+        setUserData((prevUserData) => ({
+          ...prevUserData, // Pertahankan properti user_name yang tidak berubah
+          server_data: currentData, // Perbarui properti server_data
+        }));
+        ClosePopup();
+        console.log(data);
+      })
+      .catch((err) => {
+        SetAlertError(err.response.data.message);
+      });
+  }
+
+  function LeaveServer(serverdata) {
+    hit_leaveServer(win.getItem("token"), serverdata._id).then((data) => {
+      console.log(data)
+    }).catch((err) => {
+      console.log(err)
+    })
+  }
+
+  //-----------------------------------------------------------------------------------LOGOUT
+  function logoutHandler() {
+    hit_logout(win.getItem("token"))
+      .then(() => {
+        win.removeItem("token");
+        window.location = "/login";
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
+  // --------------INI POPUP------------------
+  let [choosen, setChoosen] = useState();
+  let [join, setJoin] = useState();
+  let [create, setCreate] = useState();
+  let [discover, setDiscover] = useState();
+  let [detail, setDetail] = useState();
+  function OpenChoosen() {
     ClosePopup();
     choosen.classList.remove("hidden");
   }
-  function OpenJoin(){
+  function OpenJoin() {
     ClosePopup();
     join.classList.remove("hidden");
   }
-  function OpenDiscover(){
+  function OpenDiscover() {
     ClosePopup();
     discover.classList.remove("hidden");
   }
-  function OpenDetail(){
+  function OpenDetail() {
     ClosePopup();
     detail.classList.remove("hidden");
   }
-  function OpenCreate(){
+  function OpenCreate() {
     ClosePopup();
     create.classList.remove("hidden");
   }
-
-  
-  function ClosePopup(){
+  function ClosePopup() {
     choosen.classList.add("hidden");
     join.classList.add("hidden");
     create.classList.add("hidden");
     discover.classList.add("hidden");
     detail.classList.add("hidden");
+    SetAlertError("");
+    SetServerName("");
+    SetServerTagLine("");
+    SetServerDescription("");
   }
 
-  useEffect(() => {
-     setChoosen(document.getElementById("choosen"));
-     setJoin(document.getElementById("choosen"));
-     setCreate(document.getElementById("choosen"));
-     setDiscover(document.getElementById("choosen"));
-     setDetail(document.getElementById("choosen"));
-  }, []);
+  const [SelectedServerDetail, SetSelectedServerDetail] = useState({});
+  function HandleRightServerDetail(event, data){
+    event.preventDefault();
+    SetSelectedServerDetail(data);
 
+    let serverDetail = document.getElementById("server-detail");
+    let customDetail = document.getElementById("custom-detail");
+    serverDetail.classList.remove("hidden")
+
+    const top = event.clientY + "px";
+    const left = event.clientX + "px";
+    
+    customDetail.style.top = top;
+    customDetail.style.left = left;
+  }
+
+  window.addEventListener("click", function(){
+    let serverDetail = document.getElementById("server-detail");
+    serverDetail.classList.add("hidden")
+
+
+  });
   return (
     <div>
       <div className="container-full home-page">
         <div className="list-container">
           <div className="profil-bar">
-            <img className="profil-display" alt="" />
+            <img
+              className="profil-display"
+              src={userData.user_image}
+              alt="server"
+            />
             <div className="profil-data">
-              <p className="username">NumberMan</p>
+              <p className="username">{userData.user_name}</p>
               <p className="description">Do not disturb</p>
             </div>
-            <FontAwesomeIcon className="icon" icon={faEllipsisV} />
+            <FontAwesomeIcon
+              onClick={logoutHandler}
+              className="icon"
+              icon={faEllipsisV}
+            />
           </div>
           <div className="search-bar">
             <FontAwesomeIcon className="icon" icon={faSearch} />
@@ -133,6 +242,33 @@ function Home() {
           </div>
           <div className="room-bar">
             <div className="server-list">
+              {userData.server_data.map((row, index) => (
+                <div className="server-item unselected" onContextMenu={(e) => HandleRightServerDetail(e, row)} key={index}>
+                  <div className="bubble">
+                    <img
+                      src={row.image_url}
+                      alt=""
+                      className="server-display"
+                    />
+                    <div className="server-data">
+                      <h1>{row.name}</h1>
+                      <p>{row.description}</p>
+                    </div>
+                  </div>
+                  <div className="selected-area"></div>
+                </div>
+              ))}
+
+              {/* <div className="server-item selected">
+                <div className="bubble">
+                  <img src="" alt="" className="server-display" />
+                  <div className="server-data">
+                    <h1>Uwwow</h1>
+                    <p>There is no message yet</p>
+                  </div>
+                </div>
+                <div className="selected-area"></div>
+              </div>
               <div className="server-item unselected">
                 <div className="bubble">
                   <img src="" alt="" className="server-display" />
@@ -143,16 +279,6 @@ function Home() {
                 </div>
                 <div className="selected-area"></div>
               </div>
-              <div className="server-item selected">
-                <div className="bubble">
-                  <img src="" alt="" className="server-display" />
-                  <div className="server-data">
-                    <h1>Uwwow</h1>
-                    <p>There is no message yet</p>
-                  </div>
-                </div>
-                <div className="selected-area"></div>
-              </div>
               <div className="server-item unselected">
                 <div className="bubble">
                   <img src="" alt="" className="server-display" />
@@ -162,17 +288,7 @@ function Home() {
                   </div>
                 </div>
                 <div className="selected-area"></div>
-              </div>
-              <div className="server-item unselected">
-                <div className="bubble">
-                  <img src="" alt="" className="server-display" />
-                  <div className="server-data">
-                    <h1>Uwwow</h1>
-                    <p>There is no message yet</p>
-                  </div>
-                </div>
-                <div className="selected-area"></div>
-              </div>
+              </div> */}
             </div>
           </div>
           <div className="top-bar">
@@ -198,7 +314,11 @@ function Home() {
           <div className="chat-room">
             <div className="chat-scroll">
               {chatData.map((item, index) => (
-                <div key={`chat-${index}`} id={`chat-${index}`} className={`chat-item ${item.yours ? "yours" : ""}`}>
+                <div
+                  key={`chat-${index}`}
+                  id={`chat-${index}`}
+                  className={`chat-item ${item.yours ? "yours" : ""}`}
+                >
                   <div className="bubble">
                     <img src={item.profiledisplay} alt="" />
                     <div className="form">
@@ -226,7 +346,6 @@ function Home() {
         </div>
 
         {/* --POPUP-- */}
-
         <div className="popup-container">
           <div className="popup-menu choosen hidden" id="choosen">
             <div className="menu choosen-menu">
@@ -255,7 +374,11 @@ function Home() {
                 <button onClick={OpenJoin}>Join a Server</button>
               </div>
               <div className="menu-absolute">
-                <FontAwesomeIcon onClick={ClosePopup} className="exit icon" icon={faXmark} />
+                <FontAwesomeIcon
+                  onClick={ClosePopup}
+                  className="exit icon"
+                  icon={faXmark}
+                />
               </div>
             </div>
             <div onClick={ClosePopup} className="closepopup"></div>
@@ -277,11 +400,17 @@ function Home() {
                 </div>
               </div>
               <div className="menu-footer double-button">
-                <div onClick={OpenChoosen} className="back">Back</div>
+                <div onClick={OpenChoosen} className="back">
+                  Back
+                </div>
                 <div className="button">Join</div>
               </div>
               <div className="menu-absolute">
-                <FontAwesomeIcon onClick={ClosePopup} className="exit icon" icon={faXmark} />
+                <FontAwesomeIcon
+                  onClick={ClosePopup}
+                  className="exit icon"
+                  icon={faXmark}
+                />
               </div>
             </div>
             <div onClick={ClosePopup} className="closepopup"></div>
@@ -300,39 +429,61 @@ function Home() {
                     <input type="file" />
                   </div>
                   <div className="data">
-                    <div className="name">Rangga's Server</div>
+                    <div className="name">{userData.user_name}'s Server</div>
                     <div className="tagline">Server Tagline</div>
                   </div>
                 </div>
+
                 <div className="input-form">
-                  <label htmlFor="">Name*</label>
-                  <input placeholder="HSJGLSI" type="text" name="" id="" />
-                </div>
-                <div className="input-form">
-                  <label htmlFor="">Tagline</label>
+                  {AlertError !== "" ? (
+                    <div className="alert-form danger">
+                      <p>{AlertError}</p>
+                    </div>
+                  ) : (
+                    <div></div>
+                  )}
+                  <label htmlFor="servername">Name*</label>
                   <input
-                    placeholder="Server Tagline"
                     type="text"
-                    name=""
-                    id=""
+                    id="servername"
+                    value={ServerName}
+                    onChange={(e) => SetServerName(e.target.value)}
                   />
                 </div>
                 <div className="input-form">
-                  <label htmlFor="">Description</label>
+                  <label htmlFor="servertagline">Tagline</label>
+                  <input
+                    type="text"
+                    id="servertagline"
+                    value={ServerTagLine}
+                    onChange={(e) => SetServerTagLine(e.target.value)}
+                  />
+                </div>
+                <div className="input-form">
+                  <label htmlFor="serverdescription">Description</label>
                   <textarea
                     placeholder="Description"
                     type="text"
-                    name=""
-                    id=""
+                    id="serverdescription"
+                    value={ServerDescription}
+                    onChange={(e) => SetServerDescription(e.target.value)}
                   />
                 </div>
               </div>
               <div className="menu-footer double-button">
-                <div onClick={OpenChoosen} className="back">Back</div>
-                <div className="button">Create</div>
+                <div onClick={OpenChoosen} className="back">
+                  Back
+                </div>
+                <div className="button" onClick={CreateServer}>
+                  Create
+                </div>
               </div>
               <div className="menu-absolute">
-                <FontAwesomeIcon onClick={ClosePopup} className="exit icon" icon={faXmark} />
+                <FontAwesomeIcon
+                  onClick={ClosePopup}
+                  className="exit icon"
+                  icon={faXmark}
+                />
               </div>
             </div>
             <div onClick={ClosePopup} className="closepopup"></div>
@@ -345,7 +496,7 @@ function Home() {
               </div>
               <div className="menu-content discover-content">
                 <div className="list">
-                  <div onClick={OpenDetail} className="preview-item " >
+                  <div onClick={OpenDetail} className="preview-item ">
                     <div className="preview-image">
                       <img src="" alt="" />
                     </div>
@@ -357,12 +508,18 @@ function Home() {
                 </div>
               </div>
               <div className="menu-footer double-button">
-                <div onClick={OpenChoosen} className="back">Back</div>
+                <div onClick={OpenChoosen} className="back">
+                  Back
+                </div>
               </div>
               <div className="menu-absolute">
-                <FontAwesomeIcon onClick={ClosePopup} className="exit icon" icon={faXmark} />
+                <FontAwesomeIcon
+                  onClick={ClosePopup}
+                  className="exit icon"
+                  icon={faXmark}
+                />
                 <div className="search">
-                <FontAwesomeIcon className="icon" icon={faSearch} />
+                  <FontAwesomeIcon className="icon" icon={faSearch} />
 
                   <input type="text" placeholder="Find Community" />
                 </div>
@@ -380,14 +537,40 @@ function Home() {
                 <img src="" alt="" />
               </div>
               <div className="menu-footer double-button">
-                <div onClick={OpenDiscover} className="back">Back</div>
-                <div onClick={ClosePopup} className="button">Join</div>
+                <div onClick={OpenDiscover} className="back">
+                  Back
+                </div>
+                <div onClick={ClosePopup} className="button">
+                  Join
+                </div>
               </div>
               <div className="menu-absolute">
-                <FontAwesomeIcon onClick={ClosePopup} className="exit icon" icon={faXmark} />
+                <FontAwesomeIcon
+                  onClick={ClosePopup}
+                  className="exit icon"
+                  icon={faXmark}
+                />
               </div>
             </div>
             <div onClick={ClosePopup} className="closepopup"></div>
+          </div>
+
+          <div className="custom-right-click" id="custom-detail">
+            <div className="server-detail hidden" id="server-detail">
+              <div className="item">
+                <p>{SelectedServerDetail.name}</p>
+              </div>
+              <div className="line"></div>
+              <div className="item">
+                <p>Server Detail</p>
+              </div>
+              <div className="item">
+                <p>Notification</p>
+              </div>
+              <div onClick={(e) =>LeaveServer(SelectedServerDetail)} className="item danger">
+                <p>Leave Server</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
