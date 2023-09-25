@@ -49,6 +49,19 @@ export const hit_createServer = async (token, name, tag_line, description) => {
     return data;
 }
 
+export const hit_getServerMember = async (token, server_id) => {
+    const data = await axios.post(`${URL}/server/member`, {
+        server_id
+    }, 
+    {
+        headers:{
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    return data;
+}
+
 export const hit_leaveServer = async (token, server_id) => {
     const data = await axios.post(`${URL}/server/leave`, {
         server_id
@@ -65,6 +78,31 @@ export const hit_leaveServer = async (token, server_id) => {
 
 export const hit_logout = async (token) => {
     const data = await axios.post(`${URL}/user/logout`, {}, {
+        headers:{
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    return data;
+}
+
+
+export const hit_discover = async (token) => {
+    const data = await axios.get(`${URL}/server/discover`, 
+    {
+        headers:{
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    return data;
+}
+
+export const hit_joinServer = async (token, server_id) => {
+    const data = await axios.post(`${URL}/server/join`, {
+        server_id
+    },
+    {
         headers:{
             Authorization: `Bearer ${token}`
         }

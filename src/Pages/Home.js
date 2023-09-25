@@ -8,11 +8,18 @@ import { faEllipsisV } from "@fortawesome/free-solid-svg-icons";
 import { faPaperPlane as faPlane } from "@fortawesome/free-solid-svg-icons";
 import adventure from "../Assets/Img/Application/adventure.png";
 import weather from "../Assets/Img/Application/weather.png";
-import { hit_createServer, hit_getAllServer, hit_leaveServer, hit_logout } from "../Api";
+import {
+  hit_createServer,
+  hit_discover,
+  hit_getAllServer,
+  hit_getServerMember,
+  hit_joinServer,
+  hit_leaveServer,
+  hit_logout,
+} from "../Api";
 
 function Home() {
   let win = sessionStorage;
-  const [AlertError, SetAlertError] = useState("");
   let [userData, setUserData] = useState({
     user_name: "",
     server_data: [
@@ -87,6 +94,7 @@ function Home() {
     setCreate(document.getElementById("create"));
     setDiscover(document.getElementById("discover"));
     setDetail(document.getElementById("detail"));
+    SetServerView(document.getElementById("server-view"));
 
     if (!win.getItem("token")) {
       window.location = "/login";
@@ -95,7 +103,7 @@ function Home() {
 
       hit
         .then((data) => {
-          console.log(data.data);
+          // console.log(data.data);
           setUserData(data.data);
         })
         .catch((err) => {
@@ -104,7 +112,7 @@ function Home() {
     }
   }, [win]);
 
-  //---------------------------------------------------------------------------------Create Server
+  //-----------------------------------------------------------Create Server
   const [ServerName, SetServerName] = useState("");
   const [ServerTagLine, SetServerTagLine] = useState("");
   const [ServerDescription, SetServerDescription] = useState("");
@@ -136,14 +144,27 @@ function Home() {
   }
 
   function LeaveServer(serverdata) {
-    hit_leaveServer(win.getItem("token"), serverdata._id).then((data) => {
-      console.log(data)
-    }).catch((err) => {
-      console.log(err)
-    })
+    hit_leaveServer(win.getItem("token"), serverdata._id)
+      .then((data) => {
+        //salind sever data
+        const currentData = [...userData.server_data];
+        console.log(currentData);
+        console.log(data.data);
+        const newData = currentData.filter(
+          (item) => item._id !== serverdata._id
+        );
+
+        setUserData((prevUserData) => ({
+          ...prevUserData, // Pertahankan properti user_name yang tidak berubah
+          server_data: newData, // Perbarui properti server_data
+        }));
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
 
-  //-----------------------------------------------------------------------------------LOGOUT
+  //--------------------------------------------------------------LOGOUT
   function logoutHandler() {
     hit_logout(win.getItem("token"))
       .then(() => {
@@ -155,12 +176,33 @@ function Home() {
       });
   }
 
-  // --------------INI POPUP------------------
-  let [choosen, setChoosen] = useState();
-  let [join, setJoin] = useState();
-  let [create, setCreate] = useState();
-  let [discover, setDiscover] = useState();
-  let [detail, setDetail] = useState();
+  function JoinServer(){
+    hit_joinServer(win.getItem("token"), JoinData._id)
+    .then((data) => {
+      console.log(data)
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+    ClosePopup();
+  }
+
+  // ------------------------------------------------------------INI POPUP
+  const [AlertError, SetAlertError] = useState("");
+  const [choosen, setChoosen] = useState();
+  const [join, setJoin] = useState();
+  const [create, setCreate] = useState();
+  const [discover, setDiscover] = useState();
+  const [detail, setDetail] = useState();
+  const [ServerView, SetServerView] = useState();
+  const [DiscoverData, setDiscoverData] = useState([]);
+  const [JoinData, setJoinData] = useState({
+
+  });
+  const [MemberData, SetMemberData] = useState({
+    TotalMember: 1,
+    Members: [],
+  });
   function OpenChoosen() {
     ClosePopup();
     choosen.classList.remove("hidden");
@@ -172,14 +214,36 @@ function Home() {
   function OpenDiscover() {
     ClosePopup();
     discover.classList.remove("hidden");
+
+    hit_discover(win.getItem("token")).then((data) => {
+      console.log(data.data.data);
+      setDiscoverData(data.data.data);
+    });
   }
-  function OpenDetail() {
+
+  function OpenDetail(selectedJoin) {
+    setJoinData(selectedJoin)
     ClosePopup();
     detail.classList.remove("hidden");
   }
   function OpenCreate() {
     ClosePopup();
     create.classList.remove("hidden");
+  }
+  function HandlerServerView(set) {
+    if (set === true) {
+      ServerView.classList.remove("hidden");
+      hit_getServerMember(win.getItem("token"), SelectedServerDetail._id)
+        .then((data) => {
+          console.log(data.data);
+          SetMemberData(data.data);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    } else {
+      ServerView.classList.add("hidden");
+    }
   }
   function ClosePopup() {
     choosen.classList.add("hidden");
@@ -194,26 +258,25 @@ function Home() {
   }
 
   const [SelectedServerDetail, SetSelectedServerDetail] = useState({});
-  function HandleRightServerDetail(event, data){
+  function HandleRightServerDetail(event, data) {
     event.preventDefault();
     SetSelectedServerDetail(data);
 
     let serverDetail = document.getElementById("server-detail");
     let customDetail = document.getElementById("custom-detail");
-    serverDetail.classList.remove("hidden")
+    serverDetail.classList.remove("hidden");
 
     const top = event.clientY + "px";
     const left = event.clientX + "px";
-    
+
     customDetail.style.top = top;
     customDetail.style.left = left;
   }
 
-  window.addEventListener("click", function(){
+  //when click outside rightclick area
+  window.addEventListener("click", function () {
     let serverDetail = document.getElementById("server-detail");
-    serverDetail.classList.add("hidden")
-
-
+    serverDetail.classList.add("hidden");
   });
   return (
     <div>
@@ -243,7 +306,11 @@ function Home() {
           <div className="room-bar">
             <div className="server-list">
               {userData.server_data.map((row, index) => (
-                <div className="server-item unselected" onContextMenu={(e) => HandleRightServerDetail(e, row)} key={index}>
+                <div
+                  className="server-item unselected"
+                  onContextMenu={(e) => HandleRightServerDetail(e, row)}
+                  key={index}
+                >
                   <div className="bubble">
                     <img
                       src={row.image_url}
@@ -495,17 +562,19 @@ function Home() {
                 <p>Give your new server personality with name and an icon</p>
               </div>
               <div className="menu-content discover-content">
-                <div className="list">
-                  <div onClick={OpenDetail} className="preview-item ">
-                    <div className="preview-image">
-                      <img src="" alt="" />
-                    </div>
-                    <div className="data">
-                      <div className="name">Rangga's Server Top</div>
-                      <div className="tagline">Server Tagline</div>
+                {DiscoverData.map((row, index) => (
+                  <div className="list" key={index}>
+                    <div onClick={(e) => OpenDetail(row)} className="preview-item ">
+                      <div className="preview-image">
+                        <img src={row.image_url} alt="" />
+                      </div>
+                      <div className="data">
+                        <div className="name">{row.name}</div>
+                        <div className="tagline">{row.tag_line}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
               <div className="menu-footer double-button">
                 <div onClick={OpenChoosen} className="back">
@@ -530,17 +599,17 @@ function Home() {
           <div className="popup-menu detail hidden" id="detail">
             <div className="menu detail-menu">
               <div className="menu-title">
-                <h1>Uwoww's Server</h1>
+                <h1>{JoinData.name}</h1>
                 <p>Dicovery new server</p>
               </div>
               <div className="menu-content join-content">
-                <img src="" alt="" />
+                <img src={JoinData.image_url} alt="" />
               </div>
               <div className="menu-footer double-button">
                 <div onClick={OpenDiscover} className="back">
                   Back
                 </div>
-                <div onClick={ClosePopup} className="button">
+                <div onClick={JoinServer} className="button">
                   Join
                 </div>
               </div>
@@ -555,9 +624,44 @@ function Home() {
             <div onClick={ClosePopup} className="closepopup"></div>
           </div>
 
+          <div className="full-menu server-view hidden" id="server-view">
+            <div className="server-detail">
+              <img src={SelectedServerDetail.image_url} alt="" />
+              <div className="detail">
+                <h1>{SelectedServerDetail.name}</h1>
+                <h4>{SelectedServerDetail.tag_line}</h4>
+                <p>{SelectedServerDetail.description}</p>
+              </div>
+            </div>
+            <div className="server-manager server-member-list">
+              <div className="title">
+                <h1>MEMBER</h1>
+                <div className="line"></div>
+              </div>
+              <div className="bottom">
+                <div className="list">
+                  {MemberData.Members.map((row, index) => (
+                    <div className="item" key={index}>
+                      <img src={row.user.image_url} alt="" />
+                      <div className="data">
+                        <h2>{row.user.username}</h2>
+                        <p>{row.role}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <FontAwesomeIcon
+                onClick={(e) => HandlerServerView(false)}
+                className="exit icon"
+                icon={faXmark}
+              />
+            </div>
+          </div>
+
           <div className="custom-right-click" id="custom-detail">
             <div className="server-detail hidden" id="server-detail">
-              <div className="item">
+              <div className="item" onClick={(e) => HandlerServerView(true)}>
                 <p>{SelectedServerDetail.name}</p>
               </div>
               <div className="line"></div>
@@ -567,7 +671,10 @@ function Home() {
               <div className="item">
                 <p>Notification</p>
               </div>
-              <div onClick={(e) =>LeaveServer(SelectedServerDetail)} className="item danger">
+              <div
+                onClick={(e) => LeaveServer(SelectedServerDetail)}
+                className="item danger"
+              >
                 <p>Leave Server</p>
               </div>
             </div>
