@@ -176,14 +176,25 @@ function Home() {
       });
   }
 
-  function JoinServer(){
+  function JoinServer() {
     hit_joinServer(win.getItem("token"), JoinData._id)
-    .then((data) => {
-      console.log(data)
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+      .then((data) => {
+        console.log(data);
+        //salind sever data
+        const currentData = [...userData.server_data];
+
+        // Tambahkan data baru ke dalam currentData
+        currentData.push(data.data.server);
+
+        // Update state dengan data yang sudah diperbarui
+        setUserData((prevUserData) => ({
+          ...prevUserData, // Pertahankan properti user_name yang tidak berubah
+          server_data: currentData, // Perbarui properti server_data
+        }));
+      })
+      .catch((err) => {
+        console.log(err);
+      });
     ClosePopup();
   }
 
@@ -196,9 +207,7 @@ function Home() {
   const [detail, setDetail] = useState();
   const [ServerView, SetServerView] = useState();
   const [DiscoverData, setDiscoverData] = useState([]);
-  const [JoinData, setJoinData] = useState({
-
-  });
+  const [JoinData, setJoinData] = useState({});
   const [MemberData, SetMemberData] = useState({
     TotalMember: 1,
     Members: [],
@@ -222,7 +231,7 @@ function Home() {
   }
 
   function OpenDetail(selectedJoin) {
-    setJoinData(selectedJoin)
+    setJoinData(selectedJoin);
     ClosePopup();
     detail.classList.remove("hidden");
   }
@@ -564,7 +573,10 @@ function Home() {
               <div className="menu-content discover-content">
                 {DiscoverData.map((row, index) => (
                   <div className="list" key={index}>
-                    <div onClick={(e) => OpenDetail(row)} className="preview-item ">
+                    <div
+                      onClick={(e) => OpenDetail(row)}
+                      className="preview-item "
+                    >
                       <div className="preview-image">
                         <img src={row.image_url} alt="" />
                       </div>
