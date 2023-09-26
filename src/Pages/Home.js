@@ -1,4 +1,4 @@
-import { React, useEffect, useState } from "react";
+import { React, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
@@ -9,11 +9,10 @@ import {
   URL,
   hit_createServer,
   hit_discover,
-  hit_getAllServer,
   hit_getServerMember,
+  hit_getWebData,
   hit_joinServer,
   hit_leaveServer,
-  socket,
 } from "../Api";
 import ChatRoom from "../Component/ChatRoom";
 import Profil from "../Component/Profil";
@@ -36,6 +35,7 @@ function Home() {
     TotalMember: 1,
     Members: [],
   });
+  const [WebData, SetWebData] = useState({});
   const [ServerData, SetServerData] = useState([]);
   const [Socket, setSocket] = useState(null);
   const [ServerName, SetServerName] = useState("");
@@ -52,6 +52,8 @@ function Home() {
   const [DiscoverData, setDiscoverData] = useState([]);
   const [JoinData, setJoinData] = useState({});
   const [SelectedServerDetail, SetSelectedServerDetail] = useState({});
+  const [SelectedServer, setSelectedServer] = useState("");
+  const chatRoomRef = useRef(null);
 
   useEffect(() => {
     setChoosen(document.getElementById("choosen"));
@@ -66,15 +68,17 @@ function Home() {
     } else {
       SetupSocket();
 
-      const hit = hit_getAllServer(win.getItem("token"));
+      const hit = hit_getWebData(win.getItem("token"));
       hit
         .then((data) => {
           setUserData(data.data);
           SetServerData(data.data.server_data);
+          SetWebData(data.data)
         })
         .catch((err) => {
           console.log(err);
         });
+        
     }
     // eslint-disable-next-line
   }, [win]);
@@ -151,24 +155,20 @@ function Home() {
   function JoinServer() {
     hit_joinServer(win.getItem("token"), JoinData._id)
       .then((data) => {
-        console.log(data);
-        //salind sever data
-        const currentData = [...userData.server_data];
-
-        // Tambahkan data baru ke dalam currentData
-        currentData.push(data.data.server);
-
-        // Update state dengan data yang sudah diperbarui
-        setUserData((prevUserData) => ({
-          ...prevUserData, // Pertahankan properti user_name yang tidak berubah
-          server_data: currentData, // Perbarui properti server_data
-        }));
+        // Menggunakan callback setState untuk memastikan state selesai diperbarui
+        SetServerData((prevData) => {
+          const newData = [...prevData, data.data.server];
+          return newData;
+        });
+        
+        console.log(ServerData); // Akan mencetak data yang sudah diperbarui
       })
       .catch((err) => {
         console.log(err);
       });
     ClosePopup();
   }
+  
   function SelectServer(id) {
     const bubbleServer = document.getElementById(`server-${id}`);
     const allServer = document.getElementById("server-list").children;
@@ -185,7 +185,9 @@ function Home() {
       bubbleServer.classList.add("selected");
     }
   
-    win.setItem("selected-server", id);
+    setSelectedServer(id);
+
+    chatRoomRef.current.loadChat(id);
   }
 
   //POPUP MANAGEMENT
@@ -231,6 +233,7 @@ function Home() {
   function HandlerServerView(set) {
     if (set === true) {
       ServerView.classList.remove("hidden");
+
       hit_getServerMember(win.getItem("token"), SelectedServerDetail._id)
         .then((data) => {
           console.log(data.data);
@@ -279,7 +282,7 @@ function Home() {
           }
           {<Header OpenChoosen={OpenChoosen} />}
         </div>
-        {<ChatRoom />}
+        {<ChatRoom SelectedServer={SelectedServer} WebData={WebData} ref={chatRoomRef} Socket={Socket} />}
         {<Notification Toaster={Toaster} />}
 
         {/* --POPUP-- */}

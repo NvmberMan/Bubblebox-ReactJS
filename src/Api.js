@@ -112,3 +112,31 @@ export const hit_joinServer = async (token, server_id) => {
 
     return data;
 }
+
+
+//MESSAGE
+
+export const hit_sendMessage = async (token, server_id, message) => {
+    const data = await axios.post(`${URL}/message/send`,{
+        server_id,
+        message
+    },
+    {
+        headers:{
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    return data;
+}
+
+export const hit_getWebData = async (token) => {
+    const data = await axios.get(`${URL}/message/data`,
+    {
+        headers:{
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    return data;
+}

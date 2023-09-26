@@ -1,76 +1,135 @@
-import React from "react";
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useState,
+} from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faL, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { faPaperPlane as faPlane } from "@fortawesome/free-solid-svg-icons";
+import { hit_sendMessage } from "../Api";
 
-function ChatRoom() {
-  const chatData = [
-    {
-      id: 1,
-      name: "Rangga",
-      yours: true,
-      profiledisplay:
-        "https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/01/2023/07/06/games2-370008716.jpg",
-      message: "Hello, how are you?",
+const ChatRoom = forwardRef((props, ref) => {
+  let win = sessionStorage;
+  const [inputValue, setInputValue] = useState("");
+  const [chatData, setChatData] = useState([]);
+  const [serverData, setServerData] = useState({
+    name: "a",
+    tagline: "a",
+    image: "v",
+  });
+
+  function handleSubmit() {
+    // Lakukan sesuatu dengan nilai inputValue atau panggil fungsi lain di sini.
+    console.log("Enter ditekan, Nilai Input:", inputValue);
+    setChatData((prevData) => {
+      const newData = [
+        ...prevData,
+        {
+          id: 1,
+          name: props.WebData.user_name,
+          yours: true,
+          profiledisplay: props.WebData.user_image,
+          message: inputValue,
+        },
+      ];
+      return newData;
+    });
+
+    //insert to database
+    hit_sendMessage(win.getItem("token"), props.SelectedServer, inputValue).then((data) => {
+      console.log(data)
+    }).catch(err => {
+      console.log(err)
+    })
+
+    //send to another user
+    props.Socket.emit("sendMessage", {
+      serverRoomId: props.SelectedServer,
+      message: inputValue,
+    });
+
+    document.getElementById("input_message").value = "";
+  }
+
+  useEffect(() => {
+    if (props.Socket) {
+      const handleNewMessage = (message) => {
+        console.log(message);
+        setChatData((prevData) => {
+          const newData = [
+            ...prevData,
+            {
+              id: message.user_id,
+              name: message.user_name,
+              yours: false,
+              profiledisplay: message.user_image,
+              message: message.message,
+            },
+          ];
+          return newData;
+        });
+
+        // console.log(chatData);
+      };
+
+      props.Socket.on("newMessage", handleNewMessage);
+
+      // Membersihkan pendengar saat komponen unmount
+      return () => {
+        props.Socket.off("newMessage", handleNewMessage);
+      };
+    }
+  }, [props.Socket]);
+
+  function handleKeyDown(event) {
+    const trimmedValue = inputValue.trim();
+    if (event.key === "Enter" && trimmedValue !== "" && props.SelectedServer) {
+      handleSubmit();
+    }
+  }
+
+  useImperativeHandle(ref, () => ({
+    loadChat(id) {
+      const server_data = props.WebData.server_data.filter(
+        (d) => d._id === id
+      )[0];
+      const newChatData = [];
+
+      setServerData({
+        name: server_data.name,
+        tagline: server_data.tag_line,
+        image: server_data.image_url,
+      });
+
+      server_data.message.forEach((element) => {
+        newChatData.push({
+          id: element._id,
+          name: element.user_name,
+          yours: props.WebData.user_id === element.user_id ? true : false,
+          profiledisplay: element.user_image,
+          message: element.message,
+        });
+      });
+      setChatData(newChatData);
+
+      props.Socket.emit("leaveRoom", {
+        serverRoomId: props.SelectedServer
+      })
+
+      props.Socket.emit("joinRoom", {
+        serverRoomId: id
+      })
     },
-    {
-      id: 2,
-      name: "Affan",
-      yours: false,
-      profiledisplay:
-        "https://d1vbn70lmn1nqe.cloudfront.net/prod/wp-content/uploads/2021/10/28064854/12.-Tips-Merawat-Anak-Kucing-Munchkin.jpg",
-      message: "I'm good, thanks!",
-    },
-    {
-      id: 3,
-      name: "Rangga",
-      yours: true,
-      profiledisplay:
-        "https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/01/2023/07/06/games2-370008716.jpg",
-      message: "That's great to hear!",
-    },
-    {
-      id: 4,
-      name: "Affan",
-      yours: false,
-      profiledisplay:
-        "https://d1vbn70lmn1nqe.cloudfront.net/prod/wp-content/uploads/2021/10/28064854/12.-Tips-Merawat-Anak-Kucing-Munchkin.jpg",
-      message: "Yes, it is!",
-    },
-    {
-      id: 5,
-      name: "Rangga",
-      yours: true,
-      profiledisplay:
-        "https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/01/2023/07/06/games2-370008716.jpg",
-      message: "What have you been up to lately?",
-    },
-    {
-      id: 6,
-      name: "Affan",
-      yours: false,
-      profiledisplay:
-        "https://d1vbn70lmn1nqe.cloudfront.net/prod/wp-content/uploads/2021/10/28064854/12.-Tips-Merawat-Anak-Kucing-Munchkin.jpg",
-      message: "I've been working on some projects.",
-    },
-    {
-      id: 7,
-      name: "Rangga",
-      yours: true,
-      profiledisplay:
-        "https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/01/2023/07/06/games2-370008716.jpg",
-      message: "That sounds interesting!",
-    },
-  ];
+  }));
+
   return (
     <div className="room-container">
       <div className="top">
-        <img src="" alt="" className="server-display" />
+        <img src={serverData.image} alt="" className="server-display" />
         <div className="server-data">
-          <div className="server-title">Uwoww</div>
-          <p className="server-member">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit.{" "}
-          </p>
+          <div className="server-title">{serverData.name}</div>
+          <p className="server-member">{serverData.tagline}</p>
         </div>
       </div>
       <div className="chat-room">
@@ -100,6 +159,9 @@ function ChatRoom() {
           className="input-message"
           placeholder="Send Message"
           type="text"
+          id="input_message"
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown} // Menangkap event ketika tombol ditekan
         />
         <div className="button-bubble send-button">
           <FontAwesomeIcon className="icon" icon={faPlane} />
@@ -107,6 +169,6 @@ function ChatRoom() {
       </div>
     </div>
   );
-}
+});
 
 export default ChatRoom;

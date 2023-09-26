@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 function ServerRoom(props) {
-  let win = sessionStorage;
+  // let win = sessionStorage;
 
 
   
@@ -9,19 +9,6 @@ function ServerRoom(props) {
     <div className="room-bar">
       <div className="server-list" id="server-list">
         {props.serverData.map((row, index) => {
-
-          if(!win.getItem("selected-server"))
-          {
-            win.setItem("selected-server", row._id);
-            props.SelectServer(row._id);
-          }else
-          {
-            if(row._id === win.getItem("selected-server"))
-            {
-              props.SelectServer(row._id)
-            }
-          }
-
           return (
             <div
               className="server-item unselected"
