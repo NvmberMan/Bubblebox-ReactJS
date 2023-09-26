@@ -2,29 +2,25 @@ import { React, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faFilter } from "@fortawesome/free-solid-svg-icons";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faEllipsisV } from "@fortawesome/free-solid-svg-icons";
+import { faPaperPlane as faPlane } from "@fortawesome/free-solid-svg-icons";
 import adventure from "../Assets/Img/Application/adventure.png";
 import weather from "../Assets/Img/Application/weather.png";
-import io from "socket.io-client";
 import {
-  URL,
   hit_createServer,
   hit_discover,
   hit_getAllServer,
   hit_getServerMember,
   hit_joinServer,
   hit_leaveServer,
-  socket,
+  hit_logout,
 } from "../Api";
-import ChatRoom from "../Component/ChatRoom";
-import Profil from "../Component/Profil";
-import SearchMessageRoom from "../Component/SearchMessageRoom";
-import Header from "../Component/Header";
-import ServerRoom from "../Component/ServerRoom";
-import Notification from "../Component/Notification";
 
 function Home() {
   let win = sessionStorage;
-  const [userData, setUserData] = useState({
+  let [userData, setUserData] = useState({
     user_name: "",
     server_data: [
       {
@@ -32,26 +28,65 @@ function Home() {
       },
     ],
   });
-  const [MemberData, SetMemberData] = useState({
-    TotalMember: 1,
-    Members: [],
-  });
-  const [ServerData, SetServerData] = useState([]);
-  const [Socket, setSocket] = useState(null);
-  const [ServerName, SetServerName] = useState("");
-  const [ServerTagLine, SetServerTagLine] = useState("");
-  const [ServerDescription, SetServerDescription] = useState("");
-  const [AlertError, SetAlertError] = useState("");
-  const [Toaster, SetToaster] = useState({});
-  const [choosen, setChoosen] = useState();
-  const [join, setJoin] = useState();
-  const [create, setCreate] = useState();
-  const [discover, setDiscover] = useState();
-  const [detail, setDetail] = useState();
-  const [ServerView, SetServerView] = useState();
-  const [DiscoverData, setDiscoverData] = useState([]);
-  const [JoinData, setJoinData] = useState({});
-  const [SelectedServerDetail, SetSelectedServerDetail] = useState({});
+
+  const chatData = [
+    {
+      id: 1,
+      name: "Rangga",
+      yours: true,
+      profiledisplay:
+        "https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/01/2023/07/06/games2-370008716.jpg",
+      message: "Hello, how are you?",
+    },
+    {
+      id: 2,
+      name: "Affan",
+      yours: false,
+      profiledisplay:
+        "https://d1vbn70lmn1nqe.cloudfront.net/prod/wp-content/uploads/2021/10/28064854/12.-Tips-Merawat-Anak-Kucing-Munchkin.jpg",
+      message: "I'm good, thanks!",
+    },
+    {
+      id: 3,
+      name: "Rangga",
+      yours: true,
+      profiledisplay:
+        "https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/01/2023/07/06/games2-370008716.jpg",
+      message: "That's great to hear!",
+    },
+    {
+      id: 4,
+      name: "Affan",
+      yours: false,
+      profiledisplay:
+        "https://d1vbn70lmn1nqe.cloudfront.net/prod/wp-content/uploads/2021/10/28064854/12.-Tips-Merawat-Anak-Kucing-Munchkin.jpg",
+      message: "Yes, it is!",
+    },
+    {
+      id: 5,
+      name: "Rangga",
+      yours: true,
+      profiledisplay:
+        "https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/01/2023/07/06/games2-370008716.jpg",
+      message: "What have you been up to lately?",
+    },
+    {
+      id: 6,
+      name: "Affan",
+      yours: false,
+      profiledisplay:
+        "https://d1vbn70lmn1nqe.cloudfront.net/prod/wp-content/uploads/2021/10/28064854/12.-Tips-Merawat-Anak-Kucing-Munchkin.jpg",
+      message: "I've been working on some projects.",
+    },
+    {
+      id: 7,
+      name: "Rangga",
+      yours: true,
+      profiledisplay:
+        "https://static.promediateknologi.id/crop/0x0:0x0/0x0/webp/photo/p2/01/2023/07/06/games2-370008716.jpg",
+      message: "That sounds interesting!",
+    },
+  ];
 
   useEffect(() => {
     setChoosen(document.getElementById("choosen"));
@@ -64,56 +99,23 @@ function Home() {
     if (!win.getItem("token")) {
       window.location = "/login";
     } else {
-      SetupSocket();
-
       const hit = hit_getAllServer(win.getItem("token"));
+
       hit
         .then((data) => {
+          // console.log(data.data);
           setUserData(data.data);
-          SetServerData(data.data.server_data);
         })
         .catch((err) => {
           console.log(err);
         });
     }
-    // eslint-disable-next-line
   }, [win]);
 
-  function SetupSocket() {
-    const token = win.getItem("token");
-    const newSocket = io(URL, {
-      query: {
-        token: token,
-      },
-    });
-
-    newSocket.on("disconnect", () => {
-      setSocket(null);
-      setTimeout(SetupSocket, 3000);
-      SetToaster({
-        message: "Socket Disconnected!",
-        type: "Error",
-      });
-    });
-
-    newSocket.on("connect", () => {
-      SetToaster({
-        message: "Socket Connected!",
-        type: "Success",
-      });
-    });
-    // Mengatur SetToaster menjadi null setelah 5 detik
-    setTimeout(() => {
-      SetToaster({
-        message: "",
-        type: "null",
-      });
-    }, 2000);
-
-    setSocket(newSocket);
-  }
-
-  //SERVER MANAGEMENT
+  //-----------------------------------------------------------Create Server
+  const [ServerName, SetServerName] = useState("");
+  const [ServerTagLine, SetServerTagLine] = useState("");
+  const [ServerDescription, SetServerDescription] = useState("");
   function CreateServer() {
     hit_createServer(
       win.getItem("token"),
@@ -122,9 +124,17 @@ function Home() {
       ServerDescription
     )
       .then((data) => {
+        //salind sever data
+        const currentData = [...userData.server_data];
 
         // Tambahkan data baru ke dalam currentData
-        ServerData.push(data.data.data);
+        currentData.push(data.data.data);
+
+        // Update state dengan data yang sudah diperbarui
+        setUserData((prevUserData) => ({
+          ...prevUserData, // Pertahankan properti user_name yang tidak berubah
+          server_data: currentData, // Perbarui properti server_data
+        }));
         ClosePopup();
         console.log(data);
       })
@@ -132,22 +142,40 @@ function Home() {
         SetAlertError(err.response.data.message);
       });
   }
+
   function LeaveServer(serverdata) {
     hit_leaveServer(win.getItem("token"), serverdata._id)
       .then((data) => {
-
-
+        //salind sever data
+        const currentData = [...userData.server_data];
+        console.log(currentData);
         console.log(data.data);
-        const newData = ServerData.filter(
+        const newData = currentData.filter(
           (item) => item._id !== serverdata._id
         );
 
-        SetServerData(newData)
+        setUserData((prevUserData) => ({
+          ...prevUserData, // Pertahankan properti user_name yang tidak berubah
+          server_data: newData, // Perbarui properti server_data
+        }));
       })
       .catch((err) => {
         console.log(err);
       });
   }
+
+  //--------------------------------------------------------------LOGOUT
+  function logoutHandler() {
+    hit_logout(win.getItem("token"))
+      .then(() => {
+        win.removeItem("token");
+        window.location = "/login";
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
   function JoinServer() {
     hit_joinServer(win.getItem("token"), JoinData._id)
       .then((data) => {
@@ -169,26 +197,21 @@ function Home() {
       });
     ClosePopup();
   }
-  function SelectServer(id) {
-    const bubbleServer = document.getElementById(`server-${id}`);
-    const allServer = document.getElementById("server-list").children;
-  
-    // Periksa apakah bubbleServer ada sebelum memanipulasinya
-    if (bubbleServer) {
-      for (let i = 0; i < allServer.length; i++) {
-        const childElement = allServer[i];
-        childElement.classList.remove("selected");
-        childElement.classList.add("unselected");
-      }
-  
-      bubbleServer.classList.remove("unselected");
-      bubbleServer.classList.add("selected");
-    }
-  
-    win.setItem("selected-server", id);
-  }
 
-  //POPUP MANAGEMENT
+  // ------------------------------------------------------------INI POPUP
+  const [AlertError, SetAlertError] = useState("");
+  const [choosen, setChoosen] = useState();
+  const [join, setJoin] = useState();
+  const [create, setCreate] = useState();
+  const [discover, setDiscover] = useState();
+  const [detail, setDetail] = useState();
+  const [ServerView, SetServerView] = useState();
+  const [DiscoverData, setDiscoverData] = useState([]);
+  const [JoinData, setJoinData] = useState({});
+  const [MemberData, SetMemberData] = useState({
+    TotalMember: 1,
+    Members: [],
+  });
   function OpenChoosen() {
     ClosePopup();
     choosen.classList.remove("hidden");
@@ -206,6 +229,7 @@ function Home() {
       setDiscoverData(data.data.data);
     });
   }
+
   function OpenDetail(selectedJoin) {
     setJoinData(selectedJoin);
     ClosePopup();
@@ -215,19 +239,6 @@ function Home() {
     ClosePopup();
     create.classList.remove("hidden");
   }
-  function ClosePopup() {
-    choosen.classList.add("hidden");
-    join.classList.add("hidden");
-    create.classList.add("hidden");
-    discover.classList.add("hidden");
-    detail.classList.add("hidden");
-    SetAlertError("");
-    SetServerName("");
-    SetServerTagLine("");
-    SetServerDescription("");
-  }
-
-  //SERVER VIEW MANAGEMENT
   function HandlerServerView(set) {
     if (set === true) {
       ServerView.classList.remove("hidden");
@@ -243,8 +254,19 @@ function Home() {
       ServerView.classList.add("hidden");
     }
   }
+  function ClosePopup() {
+    choosen.classList.add("hidden");
+    join.classList.add("hidden");
+    create.classList.add("hidden");
+    discover.classList.add("hidden");
+    detail.classList.add("hidden");
+    SetAlertError("");
+    SetServerName("");
+    SetServerTagLine("");
+    SetServerDescription("");
+  }
 
-  //LISTENER RIGHT CLICK
+  const [SelectedServerDetail, SetSelectedServerDetail] = useState({});
   function HandleRightServerDetail(event, data) {
     event.preventDefault();
     SetSelectedServerDetail(data);
@@ -259,28 +281,145 @@ function Home() {
     customDetail.style.top = top;
     customDetail.style.left = left;
   }
+
+  //when click outside rightclick area
   window.addEventListener("click", function () {
     let serverDetail = document.getElementById("server-detail");
     serverDetail.classList.add("hidden");
   });
-
   return (
     <div>
       <div className="container-full home-page">
         <div className="list-container">
-          {<Profil userData={userData} />}
-          {<SearchMessageRoom />}
-          {
-            <ServerRoom
-              serverData={ServerData}
-              HandleRightServerDetail={HandleRightServerDetail}
-              SelectServer={SelectServer}
+          <div className="profil-bar">
+            <img
+              className="profil-display"
+              src={userData.user_image}
+              alt="server"
             />
-          }
-          {<Header OpenChoosen={OpenChoosen} />}
+            <div className="profil-data">
+              <p className="username">{userData.user_name}</p>
+              <p className="description">Do not disturb</p>
+            </div>
+            <FontAwesomeIcon
+              onClick={logoutHandler}
+              className="icon"
+              icon={faEllipsisV}
+            />
+          </div>
+          <div className="search-bar">
+            <FontAwesomeIcon className="icon" icon={faSearch} />
+            <input type="text" placeholder="Find a conversation" />
+            <FontAwesomeIcon className="icon" icon={faFilter} />
+          </div>
+          <div className="room-bar">
+            <div className="server-list">
+              {userData.server_data.map((row, index) => (
+                <div
+                  className="server-item unselected"
+                  onContextMenu={(e) => HandleRightServerDetail(e, row)}
+                  key={index}
+                >
+                  <div className="bubble">
+                    <img
+                      src={row.image_url}
+                      alt=""
+                      className="server-display"
+                    />
+                    <div className="server-data">
+                      <h1>{row.name}</h1>
+                      <p>{row.description}</p>
+                    </div>
+                  </div>
+                  <div className="selected-area"></div>
+                </div>
+              ))}
+
+              {/* <div className="server-item selected">
+                <div className="bubble">
+                  <img src="" alt="" className="server-display" />
+                  <div className="server-data">
+                    <h1>Uwwow</h1>
+                    <p>There is no message yet</p>
+                  </div>
+                </div>
+                <div className="selected-area"></div>
+              </div>
+              <div className="server-item unselected">
+                <div className="bubble">
+                  <img src="" alt="" className="server-display" />
+                  <div className="server-data">
+                    <h1>Uwwow</h1>
+                    <p>There is no message yet</p>
+                  </div>
+                </div>
+                <div className="selected-area"></div>
+              </div>
+              <div className="server-item unselected">
+                <div className="bubble">
+                  <img src="" alt="" className="server-display" />
+                  <div className="server-data">
+                    <h1>Uwwow</h1>
+                    <p>There is no message yet</p>
+                  </div>
+                </div>
+                <div className="selected-area"></div>
+              </div> */}
+            </div>
+          </div>
+          <div className="top-bar">
+            <div className="server-name">BUBBLEBOX</div>
+            <div className="server-description">Lorem ipsum dolor sit</div>
+          </div>
+          {/* --------absolute--------- */}
+          <div className="server-top">
+            <div className="earth"></div>
+            <div onClick={OpenChoosen} className="discover"></div>
+          </div>
         </div>
-        {<ChatRoom />}
-        {<Notification Toaster={Toaster} />}
+        <div className="room-container">
+          <div className="top">
+            <img src="" alt="" className="server-display" />
+            <div className="server-data">
+              <div className="server-title">Uwoww</div>
+              <p className="server-member">
+                Lorem ipsum dolor sit amet consectetur adipisicing elit.{" "}
+              </p>
+            </div>
+          </div>
+          <div className="chat-room">
+            <div className="chat-scroll">
+              {chatData.map((item, index) => (
+                <div
+                  key={`chat-${index}`}
+                  id={`chat-${index}`}
+                  className={`chat-item ${item.yours ? "yours" : ""}`}
+                >
+                  <div className="bubble">
+                    <img src={item.profiledisplay} alt="" />
+                    <div className="form">
+                      <div className="name">{item.name}</div>
+                      <div className="message">{item.message}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bottom">
+            <div className="button-bubble more-button">
+              <FontAwesomeIcon className="icon" icon={faPlus} />
+            </div>
+            <input
+              className="input-message"
+              placeholder="Send Message"
+              type="text"
+            />
+            <div className="button-bubble send-button">
+              <FontAwesomeIcon className="icon" icon={faPlane} />
+            </div>
+          </div>
+        </div>
 
         {/* --POPUP-- */}
         <div className="popup-container">
