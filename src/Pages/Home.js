@@ -17,6 +17,7 @@ import {
   hit_leaveServer,
   hit_logout,
 } from "../Api";
+import PopupFull from "../Component/PopupFull";
 
 function Home() {
   let win = sessionStorage;
@@ -635,6 +636,7 @@ function Home() {
             </div>
             <div onClick={ClosePopup} className="closepopup"></div>
           </div>
+
 
           <div className="full-menu server-view hidden" id="server-view">
             <div className="server-detail">
