@@ -5,23 +5,24 @@ import React, {
   useState,
 } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faL, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { faPaperPlane as faPlane } from "@fortawesome/free-solid-svg-icons";
 import { hit_sendMessage } from "../Api";
 
 const ChatRoom = forwardRef((props, ref) => {
   let win = sessionStorage;
-  const [inputValue, setInputValue] = useState("");
-  const [chatData, setChatData] = useState([]);
+  const [inputValue, setInputValue] = useState(""); //INPUT VALUE TO SENDMESSAGE
+  const [chatData, setChatData] = useState([]);   //CHAT DATA ITEM IN THIS ROOM
   const [serverData, setServerData] = useState({
     name: "a",
     tagline: "a",
     image: "v",
-  });
+  });   //DATA SERVER ON THE HEADER
 
+  //HANDLE SEND MESSAGE
   function handleSubmit() {
-    // Lakukan sesuatu dengan nilai inputValue atau panggil fungsi lain di sini.
-    console.log("Enter ditekan, Nilai Input:", inputValue);
+    
+    //INSERT TO CHATLIST
     setChatData((prevData) => {
       const newData = [
         ...prevData,
@@ -36,26 +37,83 @@ const ChatRoom = forwardRef((props, ref) => {
       return newData;
     });
 
-    //insert to database
+    //INSERT TO DATABASE
     hit_sendMessage(win.getItem("token"), props.SelectedServer, inputValue).then((data) => {
       console.log(data)
     }).catch(err => {
       console.log(err)
     })
 
-    //send to another user
+    //BROADCAST TO ALL USER
     props.Socket.emit("sendMessage", {
       serverRoomId: props.SelectedServer,
       message: inputValue,
     });
 
+    //REMOVE PREVIOUSLY INPUT VALUE
     document.getElementById("input_message").value = "";
+    setInputValue("");
   }
 
+  //HANDLE ENTER LISTENER
+  function handleKeyDown(event) {
+    const trimmedValue = inputValue.trim();
+    if (event.key === "Enter" && trimmedValue !== "" && props.SelectedServer) {
+      handleSubmit();
+    }
+  }
+
+  //ALL FUNCTION INSIDE THIS METHOD CALLED BY HOME.JS
+  useImperativeHandle(ref, () => ({
+
+    //CALLED WHEN USER CLICKED / SELECT SERVER
+    loadChat(id) {
+
+      //GET SERVER_DATA SELECTED
+      const server_data = props.WebData.server_data.filter(
+        (d) => d._id === id
+      )[0];
+      const newChatData = [];
+
+      //SET HEADER ON SELECTED SERVER
+      setServerData({
+        name: server_data.name,
+        tagline: server_data.tag_line,
+        image: server_data.image_url,
+      });
+
+      //SET CHATITEM ON SELECTED SERVER
+      server_data.message.forEach((element) => {
+        newChatData.push({
+          id: element._id,
+          name: element.user_name,
+          yours: props.WebData.user_id === element.user_id ? true : false,
+          profiledisplay: element.user_image,
+          message: element.message,
+        });
+      });
+      setChatData(newChatData);
+
+
+      //CHECK JOINING ROOM OR LEAVING ROOM
+      props.Socket.emit("leaveRoom", {
+        serverRoomId: props.SelectedServer
+      })
+      props.Socket.emit("joinRoom", {
+        serverRoomId: id
+      })
+    },
+  }));
+
+
+  //CALLED THE FIRST TIME ONCE
   useEffect(() => {
+    //CHECK IF SOCKET ALREADY INITIALLZYE WITH HOME.JS
     if (props.Socket) {
+
+      //CHECK IF CURRENTLY ON THIS SERVER
+      //CREATE CHAT ITEM IN THIS CHATROOM
       const handleNewMessage = (message) => {
-        console.log(message);
         setChatData((prevData) => {
           const newData = [
             ...prevData,
@@ -69,59 +127,17 @@ const ChatRoom = forwardRef((props, ref) => {
           ];
           return newData;
         });
-
-        // console.log(chatData);
       };
 
       props.Socket.on("newMessage", handleNewMessage);
 
-      // Membersihkan pendengar saat komponen unmount
+      //MEMPERBAIKI BUG YANG TERPANGGIL TERUS MENERUS
       return () => {
         props.Socket.off("newMessage", handleNewMessage);
       };
     }
   }, [props.Socket]);
 
-  function handleKeyDown(event) {
-    const trimmedValue = inputValue.trim();
-    if (event.key === "Enter" && trimmedValue !== "" && props.SelectedServer) {
-      handleSubmit();
-    }
-  }
-
-  useImperativeHandle(ref, () => ({
-    loadChat(id) {
-      const server_data = props.WebData.server_data.filter(
-        (d) => d._id === id
-      )[0];
-      const newChatData = [];
-
-      setServerData({
-        name: server_data.name,
-        tagline: server_data.tag_line,
-        image: server_data.image_url,
-      });
-
-      server_data.message.forEach((element) => {
-        newChatData.push({
-          id: element._id,
-          name: element.user_name,
-          yours: props.WebData.user_id === element.user_id ? true : false,
-          profiledisplay: element.user_image,
-          message: element.message,
-        });
-      });
-      setChatData(newChatData);
-
-      props.Socket.emit("leaveRoom", {
-        serverRoomId: props.SelectedServer
-      })
-
-      props.Socket.emit("joinRoom", {
-        serverRoomId: id
-      })
-    },
-  }));
 
   return (
     <div className="room-container">

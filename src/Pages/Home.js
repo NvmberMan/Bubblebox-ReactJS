@@ -35,8 +35,9 @@ function Home() {
     TotalMember: 1,
     Members: [],
   });
-  const [WebData, SetWebData] = useState({});
-  const [ServerData, SetServerData] = useState([]);
+  const [WebData, SetWebData] = useState({
+    'server_data' : []
+  });
   const [Socket, setSocket] = useState(null);
   const [ServerName, SetServerName] = useState("");
   const [ServerTagLine, SetServerTagLine] = useState("");
@@ -55,7 +56,9 @@ function Home() {
   const [SelectedServer, setSelectedServer] = useState("");
   const chatRoomRef = useRef(null);
 
+  //CALLED FIRST TIME ONCE
   useEffect(() => {
+    //INNITILIZE POPUP ELEMENT TO USESTATE
     setChoosen(document.getElementById("choosen"));
     setJoin(document.getElementById("join"));
     setCreate(document.getElementById("create"));
@@ -68,11 +71,12 @@ function Home() {
     } else {
       SetupSocket();
 
+
+      //GETTING ALL DATA - LOADING SHOULD BE HERE
       const hit = hit_getWebData(win.getItem("token"));
       hit
         .then((data) => {
           setUserData(data.data);
-          SetServerData(data.data.server_data);
           SetWebData(data.data)
         })
         .catch((err) => {
@@ -83,6 +87,7 @@ function Home() {
     // eslint-disable-next-line
   }, [win]);
 
+  //SETUP SOCKET AND INTERNET
   function SetupSocket() {
     const token = win.getItem("token");
     const newSocket = io(URL, {
@@ -126,9 +131,9 @@ function Home() {
       ServerDescription
     )
       .then((data) => {
-
+        
         // Tambahkan data baru ke dalam currentData
-        ServerData.push(data.data.data);
+        WebData.server_data.push(data.data.data);
         ClosePopup();
         console.log(data);
       })
@@ -141,12 +146,11 @@ function Home() {
       .then((data) => {
 
 
-        console.log(data.data);
-        const newData = ServerData.filter(
-          (item) => item._id !== serverdata._id
-        );
+        SetWebData((prevWebData) => ({
+          ...prevWebData,
+          server_data: prevWebData.server_data.filter((server) => server._id !== serverdata._id)
+        }));
 
-        SetServerData(newData)
       })
       .catch((err) => {
         console.log(err);
@@ -155,38 +159,41 @@ function Home() {
   function JoinServer() {
     hit_joinServer(win.getItem("token"), JoinData._id)
       .then((data) => {
-        // Menggunakan callback setState untuk memastikan state selesai diperbarui
-        SetServerData((prevData) => {
-          const newData = [...prevData, data.data.server];
-          return newData;
-        });
-        
-        console.log(ServerData); // Akan mencetak data yang sudah diperbarui
+        //PUSHING NEW SERVER TO WEBDATA.SERVER_DATA ARRAY
+        SetWebData((prevWebData) => ({
+          ...prevWebData, //GETTING WEBDATA PREVIOUSLY DATA
+          server_data: [...prevWebData.server_data, data.data.server] 
+        }));
+
       })
       .catch((err) => {
         console.log(err);
       });
     ClosePopup();
   }
-  
   function SelectServer(id) {
+    //ID = SERVER ID
     const bubbleServer = document.getElementById(`server-${id}`);
     const allServer = document.getElementById("server-list").children;
   
-    // Periksa apakah bubbleServer ada sebelum memanipulasinya
+    // CHECK IF ELEMENT IS FOUNDED IN WEBSITE
     if (bubbleServer) {
+
+      //SET ALL SERVER ITEM TO UNSELECTED
       for (let i = 0; i < allServer.length; i++) {
         const childElement = allServer[i];
         childElement.classList.remove("selected");
         childElement.classList.add("unselected");
       }
   
+      //SET ELEMENT SERVER TO SELECTED
       bubbleServer.classList.remove("unselected");
       bubbleServer.classList.add("selected");
     }
   
     setSelectedServer(id);
 
+    //CALL LOADCHAT FUNCTION IN CHATROOM.JS
     chatRoomRef.current.loadChat(id);
   }
 
@@ -275,7 +282,7 @@ function Home() {
           {<SearchMessageRoom />}
           {
             <ServerRoom
-              serverData={ServerData}
+              WebData={WebData}
               HandleRightServerDetail={HandleRightServerDetail}
               SelectServer={SelectServer}
             />

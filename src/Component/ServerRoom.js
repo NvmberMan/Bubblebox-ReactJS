@@ -3,12 +3,12 @@ import React from "react";
 function ServerRoom(props) {
   // let win = sessionStorage;
 
-
+  
   
   return (
     <div className="room-bar">
       <div className="server-list" id="server-list">
-        {props.serverData.map((row, index) => {
+        {props.WebData.server_data.map((row, index) => {
           return (
             <div
               className="server-item unselected"
