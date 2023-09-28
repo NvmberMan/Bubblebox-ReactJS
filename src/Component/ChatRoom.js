@@ -28,9 +28,9 @@ const ChatRoom = forwardRef((props, ref) => {
         ...prevData,
         {
           id: 1,
-          name: props.WebData.user_name,
+          name: props.webData.user_name,
           yours: true,
-          profiledisplay: props.WebData.user_image,
+          profiledisplay: props.webData.user_image,
           message: inputValue,
         },
       ];
@@ -38,17 +38,27 @@ const ChatRoom = forwardRef((props, ref) => {
     });
 
     //INSERT TO DATABASE
-    hit_sendMessage(win.getItem("token"), props.SelectedServer, inputValue).then((data) => {
+    hit_sendMessage(win.getItem("token"), props.selectedLeftClickServer, inputValue).then((data) => {
       console.log(data)
     }).catch(err => {
       console.log(err)
     })
 
     //BROADCAST TO ALL USER
-    props.Socket.emit("sendMessage", {
-      serverRoomId: props.SelectedServer,
+    props.socket.emit("sendMessage", {
+      serverRoomId: props.selectedLeftClickServer,
       message: inputValue,
     });
+
+    //INSERT TO GLOBAL WEBDATA
+    const newMessage = {
+      server_id : props.selectedLeftClickServer,
+      message : inputValue,
+      user_id : props.webData.user_id,
+      user_image :  props.webData.user_image,
+      user_name :  props.webData.user_name,
+    }
+    props.updateMessageToWebData(newMessage);
 
     //REMOVE PREVIOUSLY INPUT VALUE
     document.getElementById("input_message").value = "";
@@ -58,8 +68,9 @@ const ChatRoom = forwardRef((props, ref) => {
   //HANDLE ENTER LISTENER
   function handleKeyDown(event) {
     const trimmedValue = inputValue.trim();
-    if (event.key === "Enter" && trimmedValue !== "" && props.SelectedServer) {
+    if (event.key === "Enter" && trimmedValue !== "" && props.selectedLeftClickServer) {
       handleSubmit();
+      console.log(inputValue)
     }
   }
 
@@ -70,7 +81,7 @@ const ChatRoom = forwardRef((props, ref) => {
     loadChat(id) {
 
       //GET SERVER_DATA SELECTED
-      const server_data = props.WebData.server_data.filter(
+      const server_data = props.webData.server_data.filter(
         (d) => d._id === id
       )[0];
       const newChatData = [];
@@ -87,7 +98,7 @@ const ChatRoom = forwardRef((props, ref) => {
         newChatData.push({
           id: element._id,
           name: element.user_name,
-          yours: props.WebData.user_id === element.user_id ? true : false,
+          yours: props.webData.user_id === element.user_id ? true : false,
           profiledisplay: element.user_image,
           message: element.message,
         });
@@ -95,25 +106,17 @@ const ChatRoom = forwardRef((props, ref) => {
       setChatData(newChatData);
 
 
-      //CHECK JOINING ROOM OR LEAVING ROOM
-      props.Socket.emit("leaveRoom", {
-        serverRoomId: props.SelectedServer
-      })
-      props.Socket.emit("joinRoom", {
-        serverRoomId: id
-      })
     },
-  }));
 
+    //CALLED WHEN SOMEONE CHATING YOU
+    newChat(message)
+    {
 
-  //CALLED THE FIRST TIME ONCE
-  useEffect(() => {
-    //CHECK IF SOCKET ALREADY INITIALLZYE WITH HOME.JS
-    if (props.Socket) {
+      //CHECKING IF YOU ARE ON SERVER - CREATE CHAT ITEM
+      if(props.selectedLeftClickServer === message.server_id)
+      {
 
-      //CHECK IF CURRENTLY ON THIS SERVER
-      //CREATE CHAT ITEM IN THIS CHATROOM
-      const handleNewMessage = (message) => {
+        //SET TO CURRENT LIST
         setChatData((prevData) => {
           const newData = [
             ...prevData,
@@ -125,18 +128,25 @@ const ChatRoom = forwardRef((props, ref) => {
               message: message.message,
             },
           ];
-          return newData;
+          return newData
         });
-      };
 
-      props.Socket.on("newMessage", handleNewMessage);
+        //SET TO GLOBAL WEB DATA
+        props.updateMessageToWebData(message);
+      }else //IF NO SPAWN NOTIFICATION
+      {
+        props.spawnMessageNotification(message);
+        props.updateMessageToWebData(message);
+      }
 
-      //MEMPERBAIKI BUG YANG TERPANGGIL TERUS MENERUS
-      return () => {
-        props.Socket.off("newMessage", handleNewMessage);
-      };
     }
-  }, [props.Socket]);
+  }));
+
+
+  // //CALLED THE FIRST TIME ONCE
+  // useEffect(() => {
+   
+  // }, [props.Socket]);
 
 
   return (

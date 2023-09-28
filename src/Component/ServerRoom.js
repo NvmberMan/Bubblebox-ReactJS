@@ -8,7 +8,7 @@ function ServerRoom(props) {
   return (
     <div className="room-bar">
       <div className="server-list" id="server-list">
-        {props.WebData.server_data.map((row, index) => {
+        {props.webData.server_data.map((row, index) => {
           return (
             <div
               className="server-item unselected"

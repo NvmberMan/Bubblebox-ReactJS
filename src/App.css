@@ -1220,6 +1220,30 @@ border-radius: 50%;
   transform: translateX(120%);
 }
 
+.notification.server_message{
+  min-height: 70px;
+  min-width: 300px;
+  align-items: center;
+  justify-content: start;
+}
+
+.notification.server_message img{
+  background-color: var(--white);
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+}
+.notification.server_message h1{
+  font-weight: bolder;
+}
+.notification.server_message p{
+  font-size: 11px;
+}
+.notification.server_message p span{
+  font-size: 11px;
+  font-weight: bold;
+}
+
 .notification h1{
   font-size: 13px;
 }

@@ -21,11 +21,11 @@ function Profil(props) {
     <div className="profil-bar">
       <img
         className="profil-display"
-        src={props.userData.user_image}
+        src={props.webData.user_image}
         alt="server"
       />
       <div className="profil-data">
-        <p className="username">{props.userData.user_name}</p>
+        <p className="username">{props.webData.user_name}</p>
         <p className="description">Do not disturb</p>
       </div>
       <FontAwesomeIcon
