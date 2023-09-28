@@ -274,6 +274,7 @@ function Home() {
       ...prevWebData,
       server_data: updatedServerData,
     }));
+    console.log(updatedServerData)
   }
 
   //POPUP MANAGEMENT

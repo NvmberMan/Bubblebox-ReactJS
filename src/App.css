@@ -5,9 +5,8 @@ body {
       sans-serif; */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--blue);
+  background-color: var(--purple);
   overflow: hidden;
-
   /* font-family: "Jost", sans-serif; */
 }
 
@@ -547,6 +546,24 @@ body {
   width: 100%;
   padding: 15px 25px;
   gap: 10px;
+
+}
+
+.chat-room .chat-scroll .unreaded-text{
+  padding: 7px 5px;
+  display: flex;
+  justify-content: center;
+  background-color: var(--blue-grey);
+  border-radius: 3px;
+  margin-bottom: 10px;
+}
+
+.chat-room .chat-scroll .unreaded-text p{
+  background-color: var(--blue-light);
+  padding: 5px 10px;
+  border-radius: 3px;
+  color: var(--white);
+  font-size: 14px;
 }
 
 .chat-room .chat-item {
