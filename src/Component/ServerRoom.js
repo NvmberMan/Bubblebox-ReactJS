@@ -11,12 +11,13 @@ function ServerRoom(props) {
         {props.webData.server_data.map((row, index) => {
           return (
             <div
-              className="server-item unselected"
+              className={"server-item unselected "}
               onContextMenu={(e) => props.HandleRightServerDetail(e, row)}
               onClick={() => props.SelectServer(row._id)}
               key={index}
               id={`server-` + row._id}
             >
+              <div className={`unreaded-count ${row.unReadedCount > 0 ? "" : "hidden"}`}>{row.unReadedCount}</div>
               <div className="bubble">
                 <img src={row.image_url} alt="" className="server-display" />
                 <div className="server-data">

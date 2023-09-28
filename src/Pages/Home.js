@@ -42,7 +42,7 @@ function Home() {
     title: "",
     name: "",
     message: "",
-    image: ""
+    image: "",
   });
 
   //ELEMENT
@@ -85,7 +85,8 @@ function Home() {
       hit
         .then((data) => {
           setWebData(data.data);
-          // console.log(data.data)
+          SetUnreadedCountToWebData(data);
+
           data.data.server_data.forEach((element) => {
             s.emit("joinServer", {
               serverRoomId: element._id,
@@ -115,7 +116,6 @@ function Home() {
       };
     }
   });
-
 
   //SETUP SOCKET AND INTERNET
   function SetupSocket() {
@@ -152,7 +152,6 @@ function Home() {
     return newSocket;
   }
 
-
   //SERVER MANAGEMENT
   function CreateServer() {
     hit_createServer(
@@ -163,13 +162,24 @@ function Home() {
     )
       .then((data) => {
         // Tambahkan data baru ke dalam currentData
-        webData.server_data.push(data.data.data);
-        ClosePopup();
-        console.log(data);
+        // webData.server_data.unshift(data.data.data);
 
+        setWebData((prevWebData) => ({
+          ...prevWebData,
+          server_data: [data.data.data, ...prevWebData.server_data],
+        }));
+
+        //BROADCAST TO ALL MEMBER IF I JOIN THAT SERVER
         socket.emit("joinServer", {
           serverRoomId: data.data.data._id,
         });
+
+        //AUTO SELECT SERVER
+        setTimeout(() => {
+          SelectServer(data.data.data._id);
+        }, 100);
+
+        ClosePopup();
       })
       .catch((err) => {
         setAlertError(err.response.data.message);
@@ -199,14 +209,18 @@ function Home() {
         //PUSHING NEW SERVER TO WEBDATA.SERVER_DATA ARRAY
         setWebData((prevWebData) => ({
           ...prevWebData, //GETTING WEBDATA PREVIOUSLY DATA
-          server_data: [...prevWebData.server_data, data.data.server],
+          server_data: [data.data.server, ...prevWebData.server_data],
         }));
 
+        //BROADCAST TO ALL MEMBER IF I JOIN THAT SERVER
         socket.emit("joinServer", {
           serverRoomId: data.data.server._id,
         });
 
-        console.log(data.data.server);
+        //AUTO SELECT SERVER
+        setTimeout(() => {
+          SelectServer(data.data.server._id);
+        }, 100);
       })
       .catch((err) => {
         console.log(err);
@@ -215,9 +229,17 @@ function Home() {
   }
   function SelectServer(id) {
     //ID = SERVER ID
+    MoveServerSelected(id);
+    removeUnreadedServer(id);
+    setSelectedLeftClickServer(id);
+
+    //CALL LOADCHAT FUNCTION IN CHATROOM.JS
+    chatRoomRef.current.loadChat(id);
+  }
+  function MoveServerSelected(id) {
+    //ID = SERVER ID
     const bubbleServer = document.getElementById(`server-${id}`);
     const allServer = document.getElementById("server-list").children;
-
     // CHECK IF ELEMENT IS FOUNDED IN WEBSITE
     if (bubbleServer) {
       //SET ALL SERVER ITEM TO UNSELECTED
@@ -231,13 +253,28 @@ function Home() {
       bubbleServer.classList.remove("unselected");
       bubbleServer.classList.add("selected");
     }
-
-    setSelectedLeftClickServer(id);
-
-    //CALL LOADCHAT FUNCTION IN CHATROOM.JS
-    chatRoomRef.current.loadChat(id);
   }
+  function SetUnreadedCountToWebData(data) {
+    const updatedServerData = data.data.server_data.map((server) => {
+      const notReaded = server.message.reduce((count, message) => {
+        const hasReaded = message.readed.some(
+          (r) => r.user_id === data.data.user_id
+        );
+        return count + (hasReaded ? 0 : 1);
+      }, 0);
 
+      // Gabungkan newData dengan data server yang ada
+      return {
+        ...server,
+        unReadedCount: notReaded,
+      };
+    });
+
+    setWebData((prevWebData) => ({
+      ...prevWebData,
+      server_data: updatedServerData,
+    }));
+  }
 
   //POPUP MANAGEMENT
   function OpenChoosen() {
@@ -278,7 +315,6 @@ function Home() {
     setServerDescription("");
   }
 
-
   //SERVER VIEW MANAGEMENT
   function HandlerServerView(set) {
     if (set === true) {
@@ -296,8 +332,6 @@ function Home() {
       serverViewElement.classList.add("hidden");
     }
   }
-
-
 
   //LISTENER RIGHT CLICK
   function HandleRightServerDetail(event, data) {
@@ -319,8 +353,6 @@ function Home() {
     serverDetail.classList.add("hidden");
   });
 
-
-
   //CALLED BY CHILD
   function updateMessageToWebData(message) {
     const newMessageData = {
@@ -328,9 +360,9 @@ function Home() {
       message: message.message,
       user_id: message.user_id,
       user_image: message.user_image,
-      user_name: message.user_name
+      user_name: message.user_name,
     };
-    
+
     // Menggunakan filter untuk mencari ID server yang sesuai
     const updatedServerData = webData.server_data.map((server) => {
       // Jika ID server sesuai, tambahkan pesan baru ke dalam array message
@@ -343,29 +375,91 @@ function Home() {
       // Jika ID server tidak sesuai, biarkan objek server tetap seperti itu
       return server;
     });
-    
+
     // Memperbarui state dengan data yang diperbarui
     setWebData({
       ...webData,
       server_data: updatedServerData,
     });
   }
-  function spawnMessageNotification(message)
-  {
+  function spawnMessageNotification(message) {
     setMessageServerNotification({
       title: message.server_name,
       username: message.user_name,
       message: message.message,
-      image: message.server_image
-    })
+      image: message.server_image,
+    });
 
     setTimeout(() => {
       setMessageServerNotification({
-        title:""
-      })
-    }, 3500)
+        title: "",
+      });
+    }, 3500);
   }
+  function updateSortServerItemToFirstIndex(id, select = false) {
+    const serverRoomToMove = webData.server_data.find((s) => s._id === id);
+    const serverRoomToMoveIndex = webData.server_data.findIndex(
+      (s) => s._id === id
+    );
 
+    // Buat salinan array server_data tanpa elemen yang ingin dipindahkan
+    const updatedServerData = webData.server_data.filter(
+      (_, index) => index !== serverRoomToMoveIndex
+    );
+
+    // Sisipkan elemen yang ingin dipindahkan ke indeks pertama
+    updatedServerData.unshift(serverRoomToMove);
+
+    // Perbarui state webData dengan array yang telah diubah
+    setWebData({
+      ...webData,
+      server_data: updatedServerData,
+    });
+
+    if (select === true) {
+      setTimeout(() => {
+        MoveServerSelected(id);
+      }, 50);
+    }
+  }
+  function addUnreadedServer(id) {
+    setWebData((prevWebData) => {
+      return {
+        ...prevWebData,
+        server_data: prevWebData.server_data.map((server) => {
+          // Jika _id sesuai, tambahkan 1 ke unReadedCount, jika tidak, biarkan tidak berubah
+          if (server._id === id) {
+            return {
+              ...server,
+              unReadedCount: (server.unReadedCount || 0) + 1,
+            };
+          } else {
+            return server;
+          }
+        }),
+      };
+    });
+  }
+  function removeUnreadedServer(id) {
+    const serverElement = document.getElementById(`server-${id}`)
+    setTimeout(()=>{
+      setWebData((prevWebData) => ({
+        ...prevWebData,
+       server_data: prevWebData.server_data.map((server) => {
+         // Jika _id sesuai, tambahkan 1 ke unReadedCount, jika tidak, biarkan tidak berubah
+         if (server._id === id) {
+           return {
+             ...server,
+             unReadedCount: 0,
+           };
+         } else {
+           return server;
+         }
+       }),
+     }));
+    }, 300)
+    serverElement.classList.add("notif-hidden")
+  }
 
   return (
     <div>
@@ -375,7 +469,7 @@ function Home() {
           {<SearchMessageRoom />}
           {
             <ServerRoom
-            webData={webData}
+              webData={webData}
               HandleRightServerDetail={HandleRightServerDetail}
               SelectServer={SelectServer}
             />
@@ -390,11 +484,13 @@ function Home() {
             socket={socket}
             updateMessageToWebData={updateMessageToWebData}
             spawnMessageNotification={spawnMessageNotification}
+            updateSortServerItemToFirstIndex={updateSortServerItemToFirstIndex}
+            addUnreadedServer={addUnreadedServer}
           />
         }
         {
           <Notification
-          messageServerNotification={messageServerNotification}
+            messageServerNotification={messageServerNotification}
             toaster={toaster}
           />
         }

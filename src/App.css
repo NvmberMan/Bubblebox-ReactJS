@@ -324,6 +324,31 @@ body {
   justify-content: space-between;
 }
 
+.server-item .unreaded-count{
+  background-color: var(--pink-hover);
+  height: fit-content;
+  min-width: 23px;
+  min-height: 23px;
+  position: absolute;
+  border-radius: 50%0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--white);
+  font-weight: bold;
+  font-size: 13px;
+  opacity: 1;
+  transition: 0.3s;
+}
+
+.server-item.notif-hidden .unreaded-count{
+  opacity: 0;
+}
+
+.server-item .unreaded-count.hidden{
+  display: none;
+}
+
 .list-container .server-item .bubble {
   background-color: var(--white-smoke);
   width: 310px;

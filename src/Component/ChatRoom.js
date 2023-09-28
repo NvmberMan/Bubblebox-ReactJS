@@ -1,6 +1,5 @@
 import React, {
   forwardRef,
-  useEffect,
   useImperativeHandle,
   useState,
 } from "react";
@@ -21,7 +20,6 @@ const ChatRoom = forwardRef((props, ref) => {
 
   //HANDLE SEND MESSAGE
   function handleSubmit() {
-    
     //INSERT TO CHATLIST
     setChatData((prevData) => {
       const newData = [
@@ -39,7 +37,7 @@ const ChatRoom = forwardRef((props, ref) => {
 
     //INSERT TO DATABASE
     hit_sendMessage(win.getItem("token"), props.selectedLeftClickServer, inputValue).then((data) => {
-      console.log(data)
+      props.updateSortServerItemToFirstIndex(props.selectedLeftClickServer, true);
     }).catch(err => {
       console.log(err)
     })
@@ -130,13 +128,14 @@ const ChatRoom = forwardRef((props, ref) => {
           ];
           return newData
         });
-
         //SET TO GLOBAL WEB DATA
         props.updateMessageToWebData(message);
-      }else //IF NO SPAWN NOTIFICATION
+      }else //IF NO = SPAWN NOTIFICATION
       {
         props.spawnMessageNotification(message);
         props.updateMessageToWebData(message);
+        props.updateSortServerItemToFirstIndex(message.server_id);
+        props.addUnreadedServer(message.server_id);
       }
 
     }
