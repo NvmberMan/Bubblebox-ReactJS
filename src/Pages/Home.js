@@ -254,7 +254,8 @@ function Home() {
       bubbleServer.classList.add("selected");
     }
   }
-  function SetUnreadedCountToWebData(data) {
+  function SetUnreadedCountToWebData(data) //CHECKING UNDREADED MESSAGE FROM SERVER, AND UPDATE TO WEBDATA
+  {
     const updatedServerData = data.data.server_data.map((server) => {
       const notReaded = server.message.reduce((count, message) => {
         const hasReaded = message.readed.some(
@@ -274,7 +275,6 @@ function Home() {
       ...prevWebData,
       server_data: updatedServerData,
     }));
-    console.log(updatedServerData)
   }
 
   //POPUP MANAGEMENT
@@ -355,35 +355,42 @@ function Home() {
   });
 
   //CALLED BY CHILD
-  function updateMessageToWebData(message) {
-    const newMessageData = {
-      id: message.server_id,
-      message: message.message,
-      user_id: message.user_id,
-      user_image: message.user_image,
-      user_name: message.user_name,
-    };
+  function updateMessageToWebData(newMessage) //INSERT MESSAGE TO WEBDATA
+  {
 
-    // Menggunakan filter untuk mencari ID server yang sesuai
-    const updatedServerData = webData.server_data.map((server) => {
-      // Jika ID server sesuai, tambahkan pesan baru ke dalam array message
-      if (server._id === message.server_id) {
-        return {
-          ...server,
-          message: [...server.message, newMessageData],
-        };
+    // Lakukan pembaruan state dengan menggunakan setWebData
+    setWebData((prevWebData) => {
+      // Dapatkan salinan objek state sebelumnya
+      const updatedWebData = { ...prevWebData };
+
+      // Dapatkan salinan array server_data
+      const serverDataCopy = [...updatedWebData.server_data];
+
+      // Temukan server_data tertentu di mana Anda ingin memasukkan pesan baru
+      const serverDataToUpdate = serverDataCopy.find(
+        (server) => server._id === newMessage.server_id
+      );
+
+      if (serverDataToUpdate) {
+        // Temukan array message di server_data tersebut
+        const messages = serverDataToUpdate.message;
+
+        // Tambahkan pesan baru ke dalam array message
+        messages.push(newMessage);
+
+        // Perbarui server_data dengan data yang telah diubah
+        serverDataToUpdate.message = messages;
       }
-      // Jika ID server tidak sesuai, biarkan objek server tetap seperti itu
-      return server;
+
+      // Perbarui state dengan data yang telah diubah
+      updatedWebData.server_data = serverDataCopy;
+      console.log(serverDataToUpdate)
+      return updatedWebData;
     });
 
-    // Memperbarui state dengan data yang diperbarui
-    setWebData({
-      ...webData,
-      server_data: updatedServerData,
-    });
   }
-  function spawnMessageNotification(message) {
+  function spawnMessageNotification(message) //SPAWNING MESSAGE NOTIFICATION
+  {
     setMessageServerNotification({
       title: message.server_name,
       username: message.user_name,
@@ -397,70 +404,80 @@ function Home() {
       });
     }, 3500);
   }
-  function updateSortServerItemToFirstIndex(id, select = false) {
-    const serverRoomToMove = webData.server_data.find((s) => s._id === id);
-    const serverRoomToMoveIndex = webData.server_data.findIndex(
-      (s) => s._id === id
-    );
-
-    // Buat salinan array server_data tanpa elemen yang ingin dipindahkan
-    const updatedServerData = webData.server_data.filter(
-      (_, index) => index !== serverRoomToMoveIndex
-    );
-
-    // Sisipkan elemen yang ingin dipindahkan ke indeks pertama
-    updatedServerData.unshift(serverRoomToMove);
-
-    // Perbarui state webData dengan array yang telah diubah
-    setWebData({
-      ...webData,
-      server_data: updatedServerData,
-    });
-
-    if (select === true) {
-      setTimeout(() => {
-        MoveServerSelected(id);
-      }, 50);
-    }
-  }
-  function addUnreadedServer(id) {
-    setWebData((prevWebData) => {
-      return {
+  function removeUnreadedServer(id) //REMOVING SERVERITEM UNREADED NOTIF - CALLED F SELECTSERVER()
+  {
+    const serverElement = document.getElementById(`server-${id}`);
+    setTimeout(() => {
+      setWebData((prevWebData) => ({
         ...prevWebData,
         server_data: prevWebData.server_data.map((server) => {
           // Jika _id sesuai, tambahkan 1 ke unReadedCount, jika tidak, biarkan tidak berubah
           if (server._id === id) {
             return {
               ...server,
-              unReadedCount: (server.unReadedCount || 0) + 1,
+              unReadedCount: 0,
             };
           } else {
             return server;
           }
         }),
-      };
+      }));
+    }, 300);
+    serverElement.classList.add("notif-hidden");
+  }
+  function insertNotificationToWebData(message, unReaded = false) // GETTING MESSAGE FROM BRODCAST AND INSERT TO WEB DATA
+  {
+    const newMessage = {
+      server_id: message.server_id,
+      message: message.message,
+      user_id: message.user_id,
+      user_image: message.user_image,
+      user_name: message.user_name,
+    };
+    setWebData((prevWebData) => {
+      const serverIndex = prevWebData.server_data.findIndex(
+        (server) => server._id === message.server_id
+      );
+  
+      if (serverIndex !== -1) {
+        // Temukan server dengan _id yang sesuai
+        const updatedServerData = JSON.parse(JSON.stringify([...prevWebData.server_data]));
+        const serverToUpdate = updatedServerData[serverIndex];
+  
+        // Pastikan messages adalah array yang sudah ada atau inisialisasi jika belum ada
+        serverToUpdate.message = serverToUpdate.message || [];
+  
+        // Tambahkan pesan baru ke dalam array messages
+        serverToUpdate.message.push(newMessage);
+
+        if(unReaded) {
+          serverToUpdate.unReadedCount += 1;
+
+        }
+        else {
+          serverToUpdate.unReadedCount = 0;
+        }
+
+        // Perbarui server_data dengan data yang telah diubah
+        updatedServerData[serverIndex] = serverToUpdate;
+        // Perbarui state dengan data yang telah diubah
+        console.log(serverToUpdate)
+        setWebData({
+          ...prevWebData,
+          server_data: updatedServerData,
+        });
+      } else {
+        // Jika server tidak ditemukan, tidak ada perubahan
+        setWebData(prevWebData);
+
+      }
+
     });
+
+    const serverElement = document.getElementById(`server-${message.server_id}`);
+    serverElement.classList.remove("notif-hidden");
   }
-  function removeUnreadedServer(id) {
-    const serverElement = document.getElementById(`server-${id}`)
-    setTimeout(()=>{
-      setWebData((prevWebData) => ({
-        ...prevWebData,
-       server_data: prevWebData.server_data.map((server) => {
-         // Jika _id sesuai, tambahkan 1 ke unReadedCount, jika tidak, biarkan tidak berubah
-         if (server._id === id) {
-           return {
-             ...server,
-             unReadedCount: 0,
-           };
-         } else {
-           return server;
-         }
-       }),
-     }));
-    }, 300)
-    serverElement.classList.add("notif-hidden")
-  }
+  
 
   return (
     <div>
@@ -485,8 +502,7 @@ function Home() {
             socket={socket}
             updateMessageToWebData={updateMessageToWebData}
             spawnMessageNotification={spawnMessageNotification}
-            updateSortServerItemToFirstIndex={updateSortServerItemToFirstIndex}
-            addUnreadedServer={addUnreadedServer}
+            insertNotificationToWebData={insertNotificationToWebData}
           />
         }
         {
@@ -580,7 +596,7 @@ function Home() {
                     <input type="file" />
                   </div>
                   <div className="data">
-                    <div className="name">{webData.user_name}'s Server</div>
+                    <div className="name">{}'s Server</div>
                     <div className="tagline">Server Tagline</div>
                   </div>
                 </div>

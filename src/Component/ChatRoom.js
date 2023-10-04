@@ -2,7 +2,7 @@ import React, { forwardRef, useImperativeHandle, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { faPaperPlane as faPlane } from "@fortawesome/free-solid-svg-icons";
-import { hit_sendMessage } from "../Api";
+import { hit_readMessage, hit_sendMessage } from "../Api";
 
 const ChatRoom = forwardRef((props, ref) => {
   let win = sessionStorage;
@@ -10,6 +10,7 @@ const ChatRoom = forwardRef((props, ref) => {
   const [chatData, setChatData] = useState([]); //CHAT DATA ITEM IN THIS ROOM
   const [hasScroll, setHasScroll] = useState(false);
   const [serverData, setServerData] = useState({
+    id: "",
     name: "a",
     tagline: "a",
     image: "v",
@@ -68,6 +69,10 @@ const ChatRoom = forwardRef((props, ref) => {
     //REMOVE PREVIOUSLY INPUT VALUE
     document.getElementById("input_message").value = "";
     setInputValue("");
+
+    setServerData({
+      unReadedCount: 0
+    });
   }
 
   //HANDLE ENTER LISTENER
@@ -87,6 +92,7 @@ const ChatRoom = forwardRef((props, ref) => {
   useImperativeHandle(ref, () => ({
     //CALLED WHEN USER CLICKED / SELECT SERVER
     loadChat(id) {
+      console.log(props.webData.server_data);
       //GET SERVER_DATA SELECTED
       const server_data = props.webData.server_data.filter(
         (d) => d._id === id
@@ -95,6 +101,7 @@ const ChatRoom = forwardRef((props, ref) => {
 
       //SET HEADER ON SELECTED SERVER
       setServerData({
+        id: server_data._id,
         name: server_data.name,
         tagline: server_data.tag_line,
         image: server_data.image_url,
@@ -113,7 +120,23 @@ const ChatRoom = forwardRef((props, ref) => {
       });
       setChatData(newChatData);
 
+      //IF HAVE UNREADED = HIT API TO READED
+      hit_readMessage(win.getItem("token"), id).then((data) => {
+        // console.log(data)
+      }).catch((err) => {
+        console.log(err)
+      })
+      
+
+      //IF DOESNT HAVE UNREADED = SCOLL DOWN
       setHasScroll(false);
+      if(server_data.unReadedCount < 1)
+      {
+        const scrollableDiv = document.getElementById("chat-room");
+        scrollableDiv.scrollTo({
+          top: 0,
+        });
+      }
     },
 
     //CALLED WHEN SOMEONE CHATING YOU
@@ -135,42 +158,51 @@ const ChatRoom = forwardRef((props, ref) => {
           return newData;
         });
         //SET TO GLOBAL WEB DATA
-        props.updateMessageToWebData(message);
+        props.insertNotificationToWebData(message);
+        setServerData({
+          unReadedCount: 0
+        });
+
+        //SET READED TO DATABASE
+        hit_readMessage(win.getItem("token"), message.server_id);
       } //IF NO = SPAWN NOTIFICATION
       else {
         props.spawnMessageNotification(message);
-        props.updateMessageToWebData(message);
-        props.updateSortServerItemToFirstIndex(message.server_id);
-        props.addUnreadedServer(message.server_id);
+        props.insertNotificationToWebData(message, true);
       }
     },
   }));
 
-  // //CALLED THE FIRST TIME ONCE
-  // useEffect(() => {
-
-  // }, [props.Socket]);
+ 
 
   //ELEMENT
   function chatItem(item, index) {
-    setTimeout(() => {
-      if (index === chatData.length - serverData.unReadedCount && !hasScroll) {
-        setHasScroll(true);
-        const container = document.getElementById("chat-room"); // Ganti "container" dengan ID div yang Anda inginkan
-        const target = document.getElementById("target-scroll"); // Ganti "target" dengan ID div target Anda
-        const scrolling  = document.getElementById("chat-scroll"); // Ganti "target" dengan ID div target Anda
 
-        // Gulir ke elemen .target dengan efek halus (smooth)
-        // target.scrollIntoView({
-        //   top: target.offsetTop,
-        //   behavior: 'smooth',
-        // });
-        container.scrollTop += 320;
+    //AUTO SCROLLING TO DOWN AND TARGET UNREADED
+    setTimeout(() => {
+      if (serverData.unReadedCount > 0) {
+        if (index === chatData.length - serverData.unReadedCount && !hasScroll) {
+          const scrollableDiv = document.getElementById("chat-room");
+          let sizeAllChat = 0;
+          for (let i = 0; i < serverData.unReadedCount; i++) {
+            const chatSize = document.getElementById(`chat-${index}`);
+            sizeAllChat -= chatSize.clientHeight;
+          }
+  
+          // Melakukan auto scrolling ke atas dengan efek halus (smooth)
+          scrollableDiv.scrollTo({
+            top: sizeAllChat + 500,
+            behavior: "smooth",
+          });
+          setHasScroll(true);
+        }
       }
+
     }, 100);
 
+
     return (
-      <div key={`chat-${index}`} className="div1">
+      <div key={`chat-${index}`} className="div1" id={`chat-${index}`}>
         <div
           key={`chat-${index}`}
           id={`chat-${index}`}
@@ -199,14 +231,15 @@ const ChatRoom = forwardRef((props, ref) => {
       </div>
       <div className="chat-room" id="chat-room">
         <div className="chat-scroll" id="chat-scroll">
+          {/* <h1 id="tess">TESSSS</h1> */}
           {chatData.map((item, index) =>
-            index !== chatData.length - serverData.unReadedCount ? (
+            (index !== (chatData.length - serverData.unReadedCount)) ? (
               chatItem(item, index)
             ) : (
-              <div id="target-scroll" key="target">
+              <div className="target-scroll" id="target-scroll" key="target">
                 <div key={`unreaded-${index}`} className="div2">
                   <div className="unreaded-text">
-                    <p>7 new message</p>
+                    <p>{serverData.unReadedCount} new message</p>
                   </div>
                 </div>
                 {chatItem(item, index)}
@@ -231,17 +264,6 @@ const ChatRoom = forwardRef((props, ref) => {
           <FontAwesomeIcon className="icon" icon={faPlane} />
         </div>
       </div>
-
-      {/* <div className="container">
-        <div className="scrolling">
-          <div className="target"></div>
-          <div className="item"></div>
-          <div className="item"></div>
-          <div className="item"></div>
-          <div className="item"></div>
-          <div className="item"></div>
-        </div>
-      </div> */}
     </div>
   );
 });

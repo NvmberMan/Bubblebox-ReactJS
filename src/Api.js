@@ -130,6 +130,19 @@ export const hit_sendMessage = async (token, server_id, message) => {
     return data;
 }
 
+export const hit_readMessage = async (token, server_id) => {
+    const data = await axios.post(`${URL}/message/read`,{
+        server_id,
+    },
+    {
+        headers:{
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    return data;
+}
+
 export const hit_getWebData = async (token) => {
     const data = await axios.get(`${URL}/message/data`,
     {
