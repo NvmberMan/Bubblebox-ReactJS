@@ -193,7 +193,7 @@ body {
   width: 140px;
   background-size: cover;
   position: absolute;
-  margin-left: -25px;
+  margin-left: -40px;
   margin-top: -25px;
   cursor: pointer;
   transition: 0.3s;
@@ -211,11 +211,12 @@ body {
   width: 70px;
   background-size: cover;
   position: absolute;
-  margin-top: 80px;
+  margin-top: 90px;
   margin-left: -20px;
   cursor: pointer;
   transition: 0.3s;
   pointer-events: all;
+  display: none;
 }
 
 .server-top .discover:hover {
@@ -249,7 +250,7 @@ body {
   cursor: pointer;
   transition: 0.3s;
   flex-grow: 1;
-  padding-left: 10px;
+  padding-left: 7px;
 }
 
 .list-container .profil-bar .profil-data .username {
@@ -350,8 +351,8 @@ body {
 
 .list-container .server-item .bubble {
   background-color: var(--white-smoke);
-  width: 310px;
-  height: 56px;
+  width: 280px;
+  height: 63px;
   border-radius: 100px;
   transition: 0.3s;
   display: flex;
@@ -360,17 +361,18 @@ body {
 
 .list-container .server-item.unselected .bubble .server-display {
   background-color: var(--purple);
-  margin-left: 5px;
+  margin-left: 3px;
   border-radius: 50%;
-  height: 50px;
-  width: 50px;
-  margin-right: 10px;
+  height: 58px;
+  width: 58px;
+  margin-right: 8px;
   transition: 0.3s;
 }
 
 .list-container .server-item.unselected .bubble .server-data h1 {
-  font-size: 12px;
-  color: var(--purple-light);
+  font-size: 11px;
+  color: var(--purple-light3);
+  font-weight: 700;
   transition: 0.3s;
   margin-top: -6px;
 }
@@ -382,36 +384,38 @@ body {
 
 .list-container .server-item.selected .bubble {
   background-color: var(--white);
-  width: 325px;
-  height: 70px;
+  width: 305px;
+  height: 65px;
   border-radius: 100px;
   transition: 0.3s;
 }
 .list-container .server-item.selected .bubble .server-display {
   background-color: var(--purple);
-  margin-left: 5px;
+  margin-left: 2px;
   border-radius: 50%;
   height: 60px;
   width: 60px;
-  margin-right: 10px;
+  margin-right: 8px;
   transition: 0.3s;
 }
 
 .list-container .server-item.selected .bubble .server-data h1 {
-  font-size: 15px;
-  color: var(--purple-light);
+  font-size: 13px;
+  color: var(--purple-light3);
   transition: 0.3s;
   margin-top: -6px;
+  font-weight: 800;
+
 }
 .list-container .server-item.selected .bubble .server-data p {
-  font-size: 10px;
-  color: var(--blue-grey);
+  font-size: 9px;
+  color: var(--purple-light5);
   transition: 0.3s;
 }
 
 .list-container .server-item.unselected .bubble:hover {
   background-color: var(--white-smoke-hover);
-  width: 315px;
+  width: 285px;
   cursor: pointer;
 }
 
@@ -429,23 +433,25 @@ body {
   transition: 0.3s;
   border-top-left-radius: 15px;
   border-bottom-left-radius: 15px;
+  display: none;
 }
 
 /* TOPBAR */
 .list-container .top-bar {
   height: 100px;
-  background-color: var(--purple-light);
-  /* border-bottom: 2px solid var(--blue); */
-  padding-left: 124px;
+  /* background-color: var(--purple-light); */
+  border-bottom: 2px solid var();
+  padding-left: 112px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
+
 .list-container .top-bar .server-name {
   color: var(--white-smoke);
   font-size: 23px;
-  font-weight: bolder;
+  font-weight: 900;
 }
 
 .list-container .top-bar .server-description {
@@ -453,14 +459,20 @@ body {
   font-size: 12px;
 }
 /* ---------- RIGHT */
-
+.room-content{
+  flex-grow: 1;
+}
 .room-container {
   height: 100%;
   flex-grow: 1 ;
-  background-color: var(--purple);
+  background-color:var(--purple-light2);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.room-container.hidden{
+  display: none;
 }
 
 .room-container .top {
@@ -497,8 +509,7 @@ body {
   width: 100%;
   display: flex;
   justify-content: space-between;
-  padding: 0 10px;
-  margin-bottom: 10px;
+  padding: 10px 10px;
   gap: 5px;
 }
 
@@ -536,6 +547,43 @@ body {
   flex-direction: column-reverse;
   position: relative;
   overflow-y: auto;
+}
+
+
+.start-scene{
+  position: relative;
+  height: 100%;
+  flex-grow: 1;
+  background-color:var(--purple-light2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.start-scene img{
+  height: 400px;
+  width: 400px;
+}
+
+.start-scene .data{
+  width: fit-content;
+  color: white;
+  text-align: center;
+  margin-right: 40px;
+}
+
+.start-scene .data h1{
+  font-size: 24px;
+  color: var(--white-smoke);
+}
+
+.start-scene .data p{
+  font-size: 12px;
+  font-weight: 200;
+  color: var(--white-smoke);
+
 }
 
 .chat-room .chat-scroll {
@@ -1316,4 +1364,32 @@ border-radius: 50%;
   100% {
     width: 100%;
   }
+}
+
+
+
+/* --------------LOADING */
+
+.loading-webdata{
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: var(--purple-light2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loading-webdata img{
+  height: 70px;
+  width: 70px;
+}
+
+
+.loading-webdata h1{
+color: var(--white-smoke);
+}
+
+.loading-webdata.hidden{
+  display: none;
 }

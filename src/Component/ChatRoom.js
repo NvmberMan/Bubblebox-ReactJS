@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { faPaperPlane as faPlane } from "@fortawesome/free-solid-svg-icons";
 import { hit_readMessage, hit_sendMessage } from "../Api";
+import bunny from "../Assets/Img/Application/bunny-ballon2.png";
 
 const ChatRoom = forwardRef((props, ref) => {
   let win = sessionStorage;
@@ -41,10 +42,7 @@ const ChatRoom = forwardRef((props, ref) => {
       inputValue
     )
       .then((data) => {
-        props.updateSortServerItemToFirstIndex(
-          props.selectedLeftClickServer,
-          true
-        );
+
       })
       .catch((err) => {
         console.log(err);
@@ -70,9 +68,12 @@ const ChatRoom = forwardRef((props, ref) => {
     document.getElementById("input_message").value = "";
     setInputValue("");
 
-    setServerData({
-      unReadedCount: 0
-    });
+    setServerData((prevData) => ({
+      ...prevData,
+      unReadedCount: 0,
+    }));
+    
+
   }
 
   //HANDLE ENTER LISTENER
@@ -121,17 +122,17 @@ const ChatRoom = forwardRef((props, ref) => {
       setChatData(newChatData);
 
       //IF HAVE UNREADED = HIT API TO READED
-      hit_readMessage(win.getItem("token"), id).then((data) => {
-        // console.log(data)
-      }).catch((err) => {
-        console.log(err)
-      })
-      
+      hit_readMessage(win.getItem("token"), id)
+        .then((data) => {
+          // console.log(data)
+        })
+        .catch((err) => {
+          console.log(err);
+        });
 
       //IF DOESNT HAVE UNREADED = SCOLL DOWN
       setHasScroll(false);
-      if(server_data.unReadedCount < 1)
-      {
+      if (server_data.unReadedCount < 1) {
         const scrollableDiv = document.getElementById("chat-room");
         scrollableDiv.scrollTo({
           top: 0,
@@ -159,9 +160,10 @@ const ChatRoom = forwardRef((props, ref) => {
         });
         //SET TO GLOBAL WEB DATA
         props.insertNotificationToWebData(message);
-        setServerData({
-          unReadedCount: 0
-        });
+        setServerData((prevData) => ({
+          ...prevData,
+          unReadedCount: 0,
+        }));
 
         //SET READED TO DATABASE
         hit_readMessage(win.getItem("token"), message.server_id);
@@ -173,22 +175,22 @@ const ChatRoom = forwardRef((props, ref) => {
     },
   }));
 
- 
-
   //ELEMENT
   function chatItem(item, index) {
-
     //AUTO SCROLLING TO DOWN AND TARGET UNREADED
     setTimeout(() => {
       if (serverData.unReadedCount > 0) {
-        if (index === chatData.length - serverData.unReadedCount && !hasScroll) {
+        if (
+          index === chatData.length - serverData.unReadedCount &&
+          !hasScroll
+        ) {
           const scrollableDiv = document.getElementById("chat-room");
           let sizeAllChat = 0;
           for (let i = 0; i < serverData.unReadedCount; i++) {
             const chatSize = document.getElementById(`chat-${index}`);
             sizeAllChat -= chatSize.clientHeight;
           }
-  
+
           // Melakukan auto scrolling ke atas dengan efek halus (smooth)
           scrollableDiv.scrollTo({
             top: sizeAllChat + 500,
@@ -197,9 +199,7 @@ const ChatRoom = forwardRef((props, ref) => {
           setHasScroll(true);
         }
       }
-
     }, 100);
-
 
     return (
       <div key={`chat-${index}`} className="div1" id={`chat-${index}`}>
@@ -221,47 +221,56 @@ const ChatRoom = forwardRef((props, ref) => {
   }
 
   return (
-    <div className="room-container">
-      <div className="top">
-        <img src={serverData.image} alt="" className="server-display" />
-        <div className="server-data">
-          <div className="server-title">{serverData.name}</div>
-          <p className="server-member">{serverData.tagline}</p>
+    <div className="room-content">
+      <div className="room-container hidden" id="room-container">
+        <div className="top">
+          <img src={serverData.image} alt="" className="server-display" />
+          <div className="server-data">
+            <div className="server-title">{serverData.name}</div>
+            <p className="server-member">{serverData.tagline}</p>
+          </div>
         </div>
-      </div>
-      <div className="chat-room" id="chat-room">
-        <div className="chat-scroll" id="chat-scroll">
-          {/* <h1 id="tess">TESSSS</h1> */}
-          {chatData.map((item, index) =>
-            (index !== (chatData.length - serverData.unReadedCount)) ? (
-              chatItem(item, index)
-            ) : (
-              <div className="target-scroll" id="target-scroll" key="target">
-                <div key={`unreaded-${index}`} className="div2">
-                  <div className="unreaded-text">
-                    <p>{serverData.unReadedCount} new message</p>
+        <div className="chat-room" id="chat-room">
+          <div className="chat-scroll" id="chat-scroll">
+            {/* <h1 id="tess">TESSSS</h1> */}
+            {chatData.map((item, index) =>
+              index !== chatData.length - serverData.unReadedCount ? (
+                chatItem(item, index)
+              ) : (
+                <div className="target-scroll" id="target-scroll" key="target">
+                  <div key={`unreaded-${index}`} className="div2">
+                    <div className="unreaded-text">
+                      <p>{serverData.unReadedCount} new message</p>
+                    </div>
                   </div>
+                  {chatItem(item, index)}
                 </div>
-                {chatItem(item, index)}
-              </div>
-            )
-          )}
+              )
+            )}
+          </div>
+        </div>
+        <div className="bottom">
+          <div className="button-bubble more-button">
+            <FontAwesomeIcon className="icon" icon={faPlus} />
+          </div>
+          <input
+            className="input-message"
+            placeholder="Send Message"
+            type="text"
+            id="input_message"
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown} // Menangkap event ketika tombol ditekan
+          />
+          <div className="button-bubble send-button">
+            <FontAwesomeIcon className="icon" icon={faPlane} />
+          </div>
         </div>
       </div>
-      <div className="bottom">
-        <div className="button-bubble more-button">
-          <FontAwesomeIcon className="icon" icon={faPlus} />
-        </div>
-        <input
-          className="input-message"
-          placeholder="Send Message"
-          type="text"
-          id="input_message"
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown} // Menangkap event ketika tombol ditekan
-        />
-        <div className="button-bubble send-button">
-          <FontAwesomeIcon className="icon" icon={faPlane} />
+      <div className="start-scene">
+        <img src={bunny} alt="" />
+        <div className="data">
+          <h1>Welcome Back!</h1>
+          <p>We’re so excited to see you again!</p>
         </div>
       </div>
     </div>

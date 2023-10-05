@@ -14,6 +14,8 @@
   --purple: #24285B;
   --purple-dark: #0b0d2a;
   --purple-light : #41468A;
+  --purple-light3 : #01779D;
+  --purple-light5 : #5CA0B6;
   --purple-light2 : #3B407A;
   --red: #f90057;
   --red-light: #FF5490;
@@ -131,26 +133,23 @@ input, button{
   background-color: var(--red-light);
   
 }
-
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 
 /* font.css */
-@font-face {
+/* @font-face {
   font-family: 'Inter';
   src: url('./Assets/Font/Inter/Inter-VariableFont_slnt,wght.ttf') format('truetype');
-  /* Ganti path sesuai dengan lokasi font Anda */
   font-weight: normal;
   font-style: normal;
 }
 
-/* font.css */
 @font-face {
   font-family: 'Jost';
   src: url('./Assets/Font/Jost/Jost-VariableFont_wght.ttf') format('truetype');
-  /* Ganti path sesuai dengan lokasi font Anda */
   font-weight: normal;
   font-style: normal;
-}
+} */
 
 @media screen and (min-width: 576px) {
   /*=================================MAIN=================================*/

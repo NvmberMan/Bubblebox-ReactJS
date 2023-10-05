@@ -4,6 +4,8 @@ import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import adventure from "../Assets/Img/Application/adventure.png";
 import weather from "../Assets/Img/Application/weather.png";
+import loadingbar from "../Assets/Img/Application/LoadingGif.gif";
+import bunny from "../Assets/Img/Application/bunny-ballon2.png";
 import io from "socket.io-client";
 import {
   URL,
@@ -73,7 +75,7 @@ function Home() {
     setDiscoverPopupElement(document.getElementById("discover"));
     setDetailPopupElement(document.getElementById("detail"));
     setServerViewElement(document.getElementById("server-view"));
-
+    document.getElementById("loading-webdata").classList.remove("hidden");
     if (!win.getItem("token")) {
       window.location = "/login";
     } else {
@@ -92,6 +94,8 @@ function Home() {
               serverRoomId: element._id,
             });
           });
+
+          document.getElementById("loading-webdata").classList.add("hidden");
         })
         .catch((err) => {
           console.log(err);
@@ -232,6 +236,7 @@ function Home() {
     MoveServerSelected(id);
     removeUnreadedServer(id);
     setSelectedLeftClickServer(id);
+    document.getElementById("room-container").classList.remove("hidden");
 
     //CALL LOADCHAT FUNCTION IN CHATROOM.JS
     chatRoomRef.current.loadChat(id);
@@ -254,8 +259,8 @@ function Home() {
       bubbleServer.classList.add("selected");
     }
   }
-  function SetUnreadedCountToWebData(data) //CHECKING UNDREADED MESSAGE FROM SERVER, AND UPDATE TO WEBDATA
-  {
+  function SetUnreadedCountToWebData(data) {
+    //CHECKING UNDREADED MESSAGE FROM SERVER, AND UPDATE TO WEBDATA
     const updatedServerData = data.data.server_data.map((server) => {
       const notReaded = server.message.reduce((count, message) => {
         const hasReaded = message.readed.some(
@@ -355,9 +360,8 @@ function Home() {
   });
 
   //CALLED BY CHILD
-  function updateMessageToWebData(newMessage) //INSERT MESSAGE TO WEBDATA
-  {
-
+  function updateMessageToWebData(newMessage) {
+    //INSERT MESSAGE TO WEBDATA
     // Lakukan pembaruan state dengan menggunakan setWebData
     setWebData((prevWebData) => {
       // Dapatkan salinan objek state sebelumnya
@@ -384,13 +388,12 @@ function Home() {
 
       // Perbarui state dengan data yang telah diubah
       updatedWebData.server_data = serverDataCopy;
-      console.log(serverDataToUpdate)
+      console.log(serverDataToUpdate);
       return updatedWebData;
     });
-
   }
-  function spawnMessageNotification(message) //SPAWNING MESSAGE NOTIFICATION
-  {
+  function spawnMessageNotification(message) {
+    //SPAWNING MESSAGE NOTIFICATION
     setMessageServerNotification({
       title: message.server_name,
       username: message.user_name,
@@ -404,8 +407,8 @@ function Home() {
       });
     }, 3500);
   }
-  function removeUnreadedServer(id) //REMOVING SERVERITEM UNREADED NOTIF - CALLED F SELECTSERVER()
-  {
+  function removeUnreadedServer(id) {
+    //REMOVING SERVERITEM UNREADED NOTIF - CALLED F SELECTSERVER()
     const serverElement = document.getElementById(`server-${id}`);
     setTimeout(() => {
       setWebData((prevWebData) => ({
@@ -425,8 +428,8 @@ function Home() {
     }, 300);
     serverElement.classList.add("notif-hidden");
   }
-  function insertNotificationToWebData(message, unReaded = false) // GETTING MESSAGE FROM BRODCAST AND INSERT TO WEB DATA
-  {
+  function insertNotificationToWebData(message, unReaded = false) {
+    // GETTING MESSAGE FROM BRODCAST AND INSERT TO WEB DATA
     const newMessage = {
       server_id: message.server_id,
       message: message.message,
@@ -438,30 +441,30 @@ function Home() {
       const serverIndex = prevWebData.server_data.findIndex(
         (server) => server._id === message.server_id
       );
-  
+
       if (serverIndex !== -1) {
         // Temukan server dengan _id yang sesuai
-        const updatedServerData = JSON.parse(JSON.stringify([...prevWebData.server_data]));
+        const updatedServerData = JSON.parse(
+          JSON.stringify([...prevWebData.server_data])
+        );
         const serverToUpdate = updatedServerData[serverIndex];
-  
+
         // Pastikan messages adalah array yang sudah ada atau inisialisasi jika belum ada
         serverToUpdate.message = serverToUpdate.message || [];
-  
+
         // Tambahkan pesan baru ke dalam array messages
         serverToUpdate.message.push(newMessage);
 
-        if(unReaded) {
+        if (unReaded) {
           serverToUpdate.unReadedCount += 1;
-
-        }
-        else {
+        } else {
           serverToUpdate.unReadedCount = 0;
         }
 
         // Perbarui server_data dengan data yang telah diubah
         updatedServerData[serverIndex] = serverToUpdate;
         // Perbarui state dengan data yang telah diubah
-        console.log(serverToUpdate)
+        console.log(serverToUpdate);
         setWebData({
           ...prevWebData,
           server_data: updatedServerData,
@@ -469,15 +472,14 @@ function Home() {
       } else {
         // Jika server tidak ditemukan, tidak ada perubahan
         setWebData(prevWebData);
-
       }
-
     });
 
-    const serverElement = document.getElementById(`server-${message.server_id}`);
+    const serverElement = document.getElementById(
+      `server-${message.server_id}`
+    );
     serverElement.classList.remove("notif-hidden");
   }
-  
 
   return (
     <div>
@@ -726,7 +728,12 @@ function Home() {
             </div>
             <div onClick={ClosePopup} className="closepopup"></div>
           </div>
-
+          <div className="loading-webdata hidden" id="loading-webdata">
+            <div className="data">
+              <h1>BUBBLEBOX</h1>
+            </div>
+            <img src={loadingbar} alt="" />
+          </div>
           <div className="full-menu server-view hidden" id="server-view">
             <div className="server-detail">
               <img src={selectedRightClickServer.image_url} alt="" />

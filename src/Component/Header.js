@@ -5,12 +5,12 @@ function Header(props) {
     <div>
       <div className="top-bar">
         <div className="server-name">BUBBLEBOX</div>
-        <div className="server-description">Lorem ipsum dolor sit</div>
+        <div className="server-description">Big Server In the world</div>
       </div>
       {/* --------absolute--------- */}
       <div className="server-top">
-        <div className="earth"></div>
-        <div onClick={props.OpenChoosen} className="discover"></div>
+        <div onClick={props.OpenChoosen} className="earth"></div>
+        <div  className="discover"></div>
       </div>
     </div>
   );
