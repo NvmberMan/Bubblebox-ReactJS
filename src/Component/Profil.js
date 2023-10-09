@@ -1,5 +1,5 @@
 import React from "react";
-import { hit_logout } from "../Api";
+import { apiURL, hit_logout } from "../Api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { faEllipsisV } from "@fortawesome/free-solid-svg-icons";
@@ -21,7 +21,7 @@ function Profil(props) {
     <div className="profil-bar">
       <img
         className="profil-display"
-        src={props.webData.user_image}
+        src={apiURL + "/user/profil/" +  props.webData.user_image}
         alt="server"
       />
       <div className="profil-data">
@@ -29,7 +29,7 @@ function Profil(props) {
         <p className="description">Do not disturb</p>
       </div>
       <FontAwesomeIcon
-        onClick={logoutHandler}
+        onClick={props.HandleLeftUser}
         className="icon"
         icon={faEllipsisV}
       />

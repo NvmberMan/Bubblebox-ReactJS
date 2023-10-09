@@ -2,13 +2,13 @@ import { React, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
+
 import adventure from "../Assets/Img/Application/adventure.png";
 import weather from "../Assets/Img/Application/weather.png";
 import loadingbar from "../Assets/Img/Application/LoadingGif.gif";
-import bunny from "../Assets/Img/Application/bunny-ballon2.png";
 import io from "socket.io-client";
 import {
-  URL,
+  apiURL,
   hit_createServer,
   hit_discover,
   hit_getServerMember,
@@ -22,6 +22,7 @@ import SearchMessageRoom from "../Component/SearchMessageRoom";
 import Header from "../Component/Header";
 import ServerRoom from "../Component/ServerRoom";
 import Notification from "../Component/Notification";
+import SettingForm from "../Component/SettingForm";
 
 function Home() {
   let win = sessionStorage;
@@ -65,6 +66,7 @@ function Home() {
 
   //CHILD REFERENCE
   const chatRoomRef = useRef(null); //REFERENCE TO 'ChatRoom.js'
+  const settingFormRef = useRef(null); //REFERENCE TO 'SettingForm.js'
 
   //CALLED FIRST TIME ONCE
   useEffect(() => {
@@ -124,7 +126,7 @@ function Home() {
   //SETUP SOCKET AND INTERNET
   function SetupSocket() {
     const token = win.getItem("token");
-    const newSocket = io(URL, {
+    const newSocket = io(apiURL, {
       query: {
         token: token,
       },
@@ -309,6 +311,9 @@ function Home() {
     ClosePopup();
     createPopupElement.classList.remove("hidden");
   }
+  function OpenSetting(){
+    settingFormRef.current.openSetting();
+  }
   function ClosePopup() {
     choosenPopupElement.classList.add("hidden");
     joinPopupElement.classList.add("hidden");
@@ -354,10 +359,30 @@ function Home() {
     customDetail.style.top = top;
     customDetail.style.left = left;
   }
-  window.addEventListener("click", function () {
+  window.addEventListener("click", function (e) {
     let serverDetail = document.getElementById("server-detail");
+    let userDetail = document.getElementById("user-detail");
     serverDetail.classList.add("hidden");
+
+    userDetail.classList.add("hidden");
   });
+
+  //LISTENER LEFT CLICK
+  function HandleLeftUser(event) {
+    event.preventDefault();
+    // setSelectedRightClickServer(data);
+
+    setTimeout(() => {
+      let serverDetail = document.getElementById("user-detail");
+      let customDetail = document.getElementById("custom-user");
+      serverDetail.classList.remove("hidden");
+      const top = window.innerHeight - event.clientY;
+      const left = window.innerWidth - event.clientX;
+      console.log(top + " " + left);
+      customDetail.style.bottom = top + 37 + "px";
+      customDetail.style.right = left + "px";
+    }, 10);
+  }
 
   //CALLED BY CHILD
   function updateMessageToWebData(newMessage) {
@@ -481,11 +506,22 @@ function Home() {
     serverElement.classList.remove("notif-hidden");
   }
 
+  function updateUserProfil(username, phone_number, email, image_url){
+    setWebData({
+      ...webData,
+      user_name: username,
+      user_phone: phone_number,
+      user_email: email,
+      user_image: image_url
+    })
+
+  }
+
   return (
     <div>
       <div className="container-full home-page">
         <div className="list-container">
-          {<Profil webData={webData} />}
+          {<Profil webData={webData} HandleLeftUser={HandleLeftUser} />}
           {<SearchMessageRoom />}
           {
             <ServerRoom
@@ -776,7 +812,7 @@ function Home() {
               </div>
               <div className="line"></div>
               <div className="item">
-                <p>Server Detail</p>
+                <p>Mute Server</p>
               </div>
               <div className="item">
                 <p>Notification</p>
@@ -789,7 +825,28 @@ function Home() {
               </div>
             </div>
           </div>
+          <div className="custom-right-click" id="custom-user">
+            <div className="server-detail hidden" id="user-detail">
+              <div className="item" onClick={(e) => OpenCreate()}>
+                <p>Create Server</p>
+              </div>
+              <div className="item" onClick={OpenSetting}>
+                <p>Settings</p>
+              </div>
+              <div className="item">
+                <p>Pin Messages</p>
+              </div>
+              <div
+                onClick={(e) => LeaveServer(selectedRightClickServer)}
+                className="item"
+              >
+                <p>Logout</p>
+              </div>
+            </div>
+          </div>
         </div>
+        
+        <SettingForm webData={webData} updateUserProfil={updateUserProfil} ref={settingFormRef}/>
       </div>
     </div>
   );

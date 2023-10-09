@@ -1,11 +1,11 @@
 import axios from "axios";
 
-export const URL = "http://localhost:3001"
+export const apiURL = "http://localhost:3001"
 
 
 
 export const hit_login = async (email, pass) => {
-    const data = await axios.post(`${URL}/user/login`, {
+    const data = await axios.post(`${apiURL}/user/login`, {
         'email' : email,
         'password' : pass
     });
@@ -14,7 +14,7 @@ export const hit_login = async (email, pass) => {
 }
 
 export const hit_register = async (username, email, pass, repass, checkbox) => {
-    const data = await axios.post(`${URL}/user/register`, {
+    const data = await axios.post(`${apiURL}/user/register`, {
         'email' : email,
         'username' : username,
         'password' : pass,
@@ -27,7 +27,7 @@ export const hit_register = async (username, email, pass, repass, checkbox) => {
 
 
 export const hit_getAllServer = async (token) => {
-    const data = await axios.get(`${URL}/server`, {
+    const data = await axios.get(`${apiURL}/server`, {
         headers:{
             Authorization: `Bearer ${token}`
         }
@@ -37,7 +37,7 @@ export const hit_getAllServer = async (token) => {
 }
 
 export const hit_createServer = async (token, name, tag_line, description) => {
-    const data = await axios.post(`${URL}/server/create`, {
+    const data = await axios.post(`${apiURL}/server/create`, {
         name: name,
         tag_line,
         description
@@ -52,7 +52,7 @@ export const hit_createServer = async (token, name, tag_line, description) => {
 }
 
 export const hit_getServerMember = async (token, server_id) => {
-    const data = await axios.post(`${URL}/server/member`, {
+    const data = await axios.post(`${apiURL}/server/member`, {
         server_id
     }, 
     {
@@ -65,7 +65,7 @@ export const hit_getServerMember = async (token, server_id) => {
 }
 
 export const hit_leaveServer = async (token, server_id) => {
-    const data = await axios.post(`${URL}/server/leave`, {
+    const data = await axios.post(`${apiURL}/server/leave`, {
         server_id
     }, 
     {
@@ -79,7 +79,7 @@ export const hit_leaveServer = async (token, server_id) => {
 
 
 export const hit_logout = async (token) => {
-    const data = await axios.post(`${URL}/user/logout`, {}, {
+    const data = await axios.post(`${apiURL}/user/logout`, {}, {
         headers:{
             Authorization: `Bearer ${token}`
         }
@@ -90,7 +90,7 @@ export const hit_logout = async (token) => {
 
 
 export const hit_discover = async (token) => {
-    const data = await axios.get(`${URL}/server/discover`, 
+    const data = await axios.get(`${apiURL}/server/discover`, 
     {
         headers:{
             Authorization: `Bearer ${token}`
@@ -101,7 +101,7 @@ export const hit_discover = async (token) => {
 }
 
 export const hit_joinServer = async (token, server_id) => {
-    const data = await axios.post(`${URL}/server/join`, {
+    const data = await axios.post(`${apiURL}/server/join`, {
         server_id
     },
     {
@@ -117,7 +117,7 @@ export const hit_joinServer = async (token, server_id) => {
 //MESSAGE
 
 export const hit_sendMessage = async (token, server_id, message) => {
-    const data = await axios.post(`${URL}/message/send`,{
+    const data = await axios.post(`${apiURL}/message/send`,{
         server_id,
         message
     },
@@ -131,7 +131,7 @@ export const hit_sendMessage = async (token, server_id, message) => {
 }
 
 export const hit_readMessage = async (token, server_id) => {
-    const data = await axios.post(`${URL}/message/read`,{
+    const data = await axios.post(`${apiURL}/message/read`,{
         server_id,
     },
     {
@@ -144,7 +144,7 @@ export const hit_readMessage = async (token, server_id) => {
 }
 
 export const hit_getWebData = async (token) => {
-    const data = await axios.get(`${URL}/message/data`,
+    const data = await axios.get(`${apiURL}/message/data`,
     {
         headers:{
             Authorization: `Bearer ${token}`
@@ -153,3 +153,28 @@ export const hit_getWebData = async (token) => {
 
     return data;
 }
+
+
+//USER MANAGEMENT
+
+export const hit_updateUserProfil = async (token, username, phone_number, email, image = null) => {
+    const data = await axios.put(`${apiURL}/user/profil`,{
+        username,
+        phone_number,
+        email,
+        Image: image
+    },
+    {
+        headers:{
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+
+    return data;
+}
+
+
+
+
+

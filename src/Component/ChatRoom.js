@@ -2,7 +2,7 @@ import React, { forwardRef, useImperativeHandle, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { faPaperPlane as faPlane } from "@fortawesome/free-solid-svg-icons";
-import { hit_readMessage, hit_sendMessage } from "../Api";
+import { apiURL, hit_readMessage, hit_sendMessage } from "../Api";
 import bunny from "../Assets/Img/Application/bunny-ballon2.png";
 
 const ChatRoom = forwardRef((props, ref) => {
@@ -209,7 +209,7 @@ const ChatRoom = forwardRef((props, ref) => {
           className={`chat-item ${item.yours ? "yours" : ""}`}
         >
           <div className="bubble">
-            <img src={item.profiledisplay} alt="" />
+            <img src={apiURL + "/user/profil/" +  item.profiledisplay} alt="" />
             <div className="form">
               <div className="name">{item.name}</div>
               <div className="message">{item.message}</div>
