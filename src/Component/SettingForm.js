@@ -25,7 +25,10 @@ const SettingForm = forwardRef((props, ref) => {
     user_phone: "",
     user_image: "",
   });
-  const [profilImage, setProfilImage] = useState("");
+  const [profilImage, setProfilImage] = useState({
+    url: "",
+    key: 0,
+  });
   const usernameInputRef = useRef(null);
   const phoneInputRef = useRef(null);
   const emailInputRef = useRef(null);
@@ -43,8 +46,12 @@ const SettingForm = forwardRef((props, ref) => {
       user_phone: props.webData.user_phone,
       user_image: null,
     });
-    setProfilImage(apiURL + "/user/profil/" + props.webData.user_image);
-
+    if (props.webData.user_image) {
+      setProfilImage({
+        url: "",
+        key: 0,
+      });
+    }
     setGeneralElement(document.getElementById("admin-general"));
     setAccountElement(document.getElementById("admin-account"));
 
@@ -125,15 +132,24 @@ const SettingForm = forwardRef((props, ref) => {
           data.data.email,
           data.data.image_url
         );
-        
+        props.updateOwnChat(data.data);
+        props.socket.emit("updateUser", {
+          newData: data.data
+        });
+
+        if(accountData.user_image)
+        {
+          const imageUrl = URL.createObjectURL(accountData.user_image);
+          setProfilImage({
+            key: profilImage.key + 1,
+            url: imageUrl,
+          });
+        }
+
       })
       .catch((err) => {
-        alert(err);
+        console.log(err);
       });
-
-
-    console.log(accountData);
-
   }
 
   //CALLED FROM INPUT FIELD WHEN VALUE IS CHANGED
@@ -198,9 +214,12 @@ const SettingForm = forwardRef((props, ref) => {
         const imageUrl = URL.createObjectURL(selectedFile);
         setAccountData({
           ...accountData,
-          user_image: selectedFile
+          user_image: selectedFile,
         });
-        setProfilImage(imageUrl);
+        setProfilImage({
+          ...profilImage,
+          url: imageUrl,
+        });
         openSavingAlert();
       } else {
         // Tipe MIME tidak sesuai dengan yang diizinkan
@@ -271,13 +290,22 @@ const SettingForm = forwardRef((props, ref) => {
           <div className="form-row admin-profile">
             <div className="input-form">
               <div className="user-display" onClick={clickUserInputImage}>
-                <img
-                  className="user-image"
-                  id="user-image"
-                  src={profilImage}
-                  alt=""
-                />
-
+                {props.webData.user_image && (
+                  <img
+                    className="user-image"
+                    id="user-image"
+                    src={
+                      profilImage.url === ""
+                        ? apiURL +
+                          "/user/profil/" +
+                          props.webData.user_image +
+                          `?v=${props.webData.user_image_key}`
+                        : profilImage.url
+                    }
+                    key={profilImage.key}
+                    alt=""
+                  />
+                )}
                 <div className="user-display-hover">
                   <FontAwesomeIcon className="icon" icon={faPencil} />
                 </div>

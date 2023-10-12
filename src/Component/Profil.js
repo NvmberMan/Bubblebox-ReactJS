@@ -4,8 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { faEllipsisV } from "@fortawesome/free-solid-svg-icons";
 function Profil(props) {
-    let win = sessionStorage;
-
+  let win = sessionStorage;
 
   function logoutHandler() {
     hit_logout(win.getItem("token"))
@@ -19,11 +18,14 @@ function Profil(props) {
   }
   return (
     <div className="profil-bar">
-      <img
-        className="profil-display"
-        src={apiURL + "/user/profil/" +  props.webData.user_image}
-        alt="server"
-      />
+      {props.webData.user_image && (
+        <img
+          className="profil-display"
+          src={apiURL + "/user/profil/" + props.webData.user_image + `?v=${props.webData.user_image_key}`}
+          key={props.webData.user_image_key}
+          alt="server"
+        />
+      )}
       <div className="profil-data">
         <p className="username">{props.webData.user_name}</p>
         <p className="description">Do not disturb</p>

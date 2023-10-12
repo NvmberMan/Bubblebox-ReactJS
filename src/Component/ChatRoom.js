@@ -52,6 +52,7 @@ const ChatRoom = forwardRef((props, ref) => {
     props.socket.emit("sendMessage", {
       serverRoomId: props.selectedLeftClickServer,
       message: inputValue,
+      username: props.webData.user_name
     });
 
     //INSERT TO GLOBAL WEBDATA
@@ -93,7 +94,6 @@ const ChatRoom = forwardRef((props, ref) => {
   useImperativeHandle(ref, () => ({
     //CALLED WHEN USER CLICKED / SELECT SERVER
     loadChat(id) {
-      console.log(props.webData.server_data);
       //GET SERVER_DATA SELECTED
       const server_data = props.webData.server_data.filter(
         (d) => d._id === id
@@ -113,9 +113,11 @@ const ChatRoom = forwardRef((props, ref) => {
       server_data.message.forEach((element) => {
         newChatData.push({
           id: element._id,
+          user_id: element.user_id,
           name: element.user_name,
           yours: props.webData.user_id === element.user_id ? true : false,
           profiledisplay: element.user_image,
+          profiledisplay_key : 0,
           message: element.message,
         });
       });
@@ -142,6 +144,9 @@ const ChatRoom = forwardRef((props, ref) => {
 
     //CALLED WHEN SOMEONE CHATING YOU
     newChat(message) {
+
+      // const previewProfilDisplayKey = chatData.find((c) => c.user_id === message.user_id);
+
       //CHECKING IF YOU ARE ON SERVER - CREATE CHAT ITEM
       if (props.selectedLeftClickServer === message.server_id) {
         //SET TO CURRENT LIST
@@ -153,6 +158,7 @@ const ChatRoom = forwardRef((props, ref) => {
               name: message.user_name,
               yours: false,
               profiledisplay: message.user_image,
+              // profiledisplay_key: previewProfilDisplayKey.profiledisplay_key,
               message: message.message,
             },
           ];
@@ -167,12 +173,42 @@ const ChatRoom = forwardRef((props, ref) => {
 
         //SET READED TO DATABASE
         hit_readMessage(win.getItem("token"), message.server_id);
+
+
       } //IF NO = SPAWN NOTIFICATION
       else {
         props.spawnMessageNotification(message);
         props.insertNotificationToWebData(message, true);
       }
     },
+
+    updateOwnChat(newData){
+      const updatedChatData = chatData.map(chat => {
+        if (chat.yours) {
+          return { ...chat, name: newData.username };
+        } else {
+          return chat; // Kembalikan objek aslinya jika kondisi if tidak terpenuhi
+        }
+      });
+      
+      setChatData(updatedChatData);
+      
+      
+      // console.log(serverData);
+    },
+
+    updateOtherChat(newData){
+
+      const updatedChatData = chatData.map(chat => {
+        if (chat.user_id === newData.newData._id) {
+          return { ...chat, name: newData.newData.username, profiledisplay_key: (chat.profiledisplay_key + 1) };
+        } else {
+          return chat; // Kembalikan objek aslinya jika kondisi if tidak terpenuhi
+        }
+      });
+      console.log(updatedChatData)
+      setChatData(updatedChatData);
+    }
   }));
 
   //ELEMENT
@@ -209,7 +245,7 @@ const ChatRoom = forwardRef((props, ref) => {
           className={`chat-item ${item.yours ? "yours" : ""}`}
         >
           <div className="bubble">
-            <img src={apiURL + "/user/profil/" +  item.profiledisplay} alt="" />
+            <img src={apiURL + "/user/profil/" +  item.profiledisplay + `?v=${!item.yours ? (item.profiledisplay_key) :  (props.webData.user_image_key)}`} alt="" />
             <div className="form">
               <div className="name">{item.name}</div>
               <div className="message">{item.message}</div>

@@ -32,7 +32,17 @@ function Home() {
   });
   const [webData, setWebData] = useState({
     server_data: [],
+    user_image: "",
+    user_image_key: 0
   });
+  // const [webData, setWebData] = useState({
+  //   server_data: [
+  //     {message:[{
+  //       user_name: "Wildan",
+  //       yours: true,
+  //     }]}
+  //   ],
+  // });
   const [socket, setSocket] = useState(null);
 
   //INPUT FIELD
@@ -88,7 +98,11 @@ function Home() {
       const hit = hit_getWebData(win.getItem("token"));
       hit
         .then((data) => {
-          setWebData(data.data);
+          setWebData({
+            ...data.data,
+            user_image_key: 0,
+          });
+
           SetUnreadedCountToWebData(data);
 
           data.data.server_data.forEach((element) => {
@@ -112,13 +126,20 @@ function Home() {
       const handleNewMessage = (message) => {
         chatRoomRef.current.newChat(message);
       };
-      // console.log(message);
+      const handleUpdateOtherUser = (newData) => {
+        // setTimeout(() => {
+          chatRoomRef.current.updateOtherChat(newData);
+        // }, 100);
+        updateOtherChat(newData);
+      };
 
       socket.on("newMessage", handleNewMessage);
+      socket.on("updateOtherUser", handleUpdateOtherUser);
 
       //MEMPERBAIKI BUG YANG TERPANGGIL TERUS MENERUS
       return () => {
         socket.off("newMessage", handleNewMessage);
+        socket.off("updateOtherUser", handleUpdateOtherUser);
       };
     }
   });
@@ -311,7 +332,7 @@ function Home() {
     ClosePopup();
     createPopupElement.classList.remove("hidden");
   }
-  function OpenSetting(){
+  function OpenSetting() {
     settingFormRef.current.openSetting();
   }
   function ClosePopup() {
@@ -505,16 +526,45 @@ function Home() {
     );
     serverElement.classList.remove("notif-hidden");
   }
-
-  function updateUserProfil(username, phone_number, email, image_url){
-    setWebData({
+  function updateUserProfil(username, phone_number, email, image_url) {
+    console.log(username)
+    const updatedWebData = {
       ...webData,
       user_name: username,
       user_phone: phone_number,
       user_email: email,
-      user_image: image_url
-    })
-
+      user_image: image_url,
+      user_image_key: webData.user_image_key + 1,
+      server_data: webData.server_data.map((data) => ({
+        ...data,
+        message: data.message.map((message) => {
+          if (message.user_id === webData.user_id) {
+            return { ...message, user_name: username };
+          }
+          return message;
+        }),
+      })),
+    };
+    setWebData(updatedWebData);
+    console.log(updatedWebData);
+  }
+  function updateOwnChat(data) {
+    chatRoomRef.current.updateOwnChat(data);
+  }
+  function updateOtherChat(newData) {
+    const updatedWebData = {
+      ...webData,
+      server_data: webData.server_data.map((data) => ({
+        ...data,
+        message: data.message.map((message) => {
+          if (message.user_id === newData.newData._id) {
+            return { ...message, user_name: newData.newData.username };
+          }
+          return message;
+        }),
+      })),
+    };
+    setWebData(updatedWebData);
   }
 
   return (
@@ -845,8 +895,14 @@ function Home() {
             </div>
           </div>
         </div>
-        
-        <SettingForm webData={webData} updateUserProfil={updateUserProfil} ref={settingFormRef}/>
+
+        <SettingForm
+          webData={webData}
+          updateUserProfil={updateUserProfil}
+          socket={socket}
+          updateOwnChat={updateOwnChat}
+          ref={settingFormRef}
+        />
       </div>
     </div>
   );
