@@ -4,18 +4,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { faEllipsisV } from "@fortawesome/free-solid-svg-icons";
 function Profil(props) {
-  let win = sessionStorage;
 
-  function logoutHandler() {
-    hit_logout(win.getItem("token"))
-      .then(() => {
-        win.removeItem("token");
-        window.location = "/login";
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }
+
   return (
     <div className="profil-bar">
       {props.webData.user_image && (

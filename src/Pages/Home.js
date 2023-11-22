@@ -2,10 +2,12 @@ import { React, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
 
 import adventure from "../Assets/Img/Application/adventure.png";
 import weather from "../Assets/Img/Application/weather.png";
 import loadingbar from "../Assets/Img/Application/LoadingGif.gif";
+import bubbleServer from "../Assets/Img/Application/bubbleserver.png";
 import io from "socket.io-client";
 import {
   apiURL,
@@ -15,6 +17,7 @@ import {
   hit_getWebData,
   hit_joinServer,
   hit_leaveServer,
+  hit_logout,
 } from "../Api";
 import ChatRoom from "../Component/ChatRoom";
 import Profil from "../Component/Profil";
@@ -33,7 +36,7 @@ function Home() {
   const [webData, setWebData] = useState({
     server_data: [],
     user_image: "",
-    user_image_key: 0
+    user_image_key: 0,
   });
   // const [webData, setWebData] = useState({
   //   server_data: [
@@ -47,6 +50,8 @@ function Home() {
 
   //INPUT FIELD
   const [serverName, setServerName] = useState("");
+  const [serverImage, setServerImage] = useState("");
+  const [serverImageData, setServerImageData] = useState("");
   const [serverTagLine, setServerTagLine] = useState("");
   const [serverDescription, setServerDescription] = useState("");
   const [alertError, setAlertError] = useState("");
@@ -96,26 +101,25 @@ function Home() {
 
       //GETTING ALL DATA - LOADING SHOULD BE HERE
       const hit = hit_getWebData(win.getItem("token"));
-      hit
-        .then((data) => {
-          setWebData({
-            ...data.data,
-            user_image_key: 0,
-          });
-
-          SetUnreadedCountToWebData(data);
-
-          data.data.server_data.forEach((element) => {
-            s.emit("joinServer", {
-              serverRoomId: element._id,
-            });
-          });
-
-          document.getElementById("loading-webdata").classList.add("hidden");
-        })
-        .catch((err) => {
-          console.log(err);
+      hit.then((data) => {
+        setWebData({
+          ...data.data,
+          user_image_key: 0,
         });
+
+        SetUnreadedCountToWebData(data);
+
+        data.data.server_data.forEach((element) => {
+          s.emit("joinServer", {
+            serverRoomId: element._id,
+          });
+        });
+        document.getElementById("loading-webdata").classList.add("hidden");
+      });
+
+      hit.catch((err) => {
+        console.log(err);
+      });
     }
 
     // eslint-disable-next-line
@@ -128,7 +132,7 @@ function Home() {
       };
       const handleUpdateOtherUser = (newData) => {
         // setTimeout(() => {
-          chatRoomRef.current.updateOtherChat(newData);
+        chatRoomRef.current.updateOtherChat(newData);
         // }, 100);
         updateOtherChat(newData);
       };
@@ -185,7 +189,8 @@ function Home() {
       win.getItem("token"),
       serverName,
       serverTagLine,
-      serverDescription
+      serverDescription,
+      serverImageData
     )
       .then((data) => {
         // Tambahkan data baru ke dalam currentData
@@ -304,6 +309,16 @@ function Home() {
       server_data: updatedServerData,
     }));
   }
+  function logoutHandler() {
+    hit_logout(win.getItem("token"))
+      .then(() => {
+        win.removeItem("token");
+        window.location = "/login";
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
 
   //POPUP MANAGEMENT
   function OpenChoosen() {
@@ -341,6 +356,7 @@ function Home() {
     createPopupElement.classList.add("hidden");
     discoverPopupElement.classList.add("hidden");
     detailPopupElement.classList.add("hidden");
+    setServerImage("");
     setAlertError("");
     setServerName("");
     setServerTagLine("");
@@ -527,7 +543,7 @@ function Home() {
     serverElement.classList.remove("notif-hidden");
   }
   function updateUserProfil(username, phone_number, email, image_url) {
-    console.log(username)
+    console.log(username);
     const updatedWebData = {
       ...webData,
       user_name: username,
@@ -565,6 +581,32 @@ function Home() {
       })),
     };
     setWebData(updatedWebData);
+  }
+
+  //CREATE SERVER IMAGE MANAGEMENT
+  function clickCraeteUserInputImage() {
+    const inputFile = document.getElementById("create-server-image");
+    inputFile.click();
+  }
+  function selectUserInputImage(e) {
+    e.preventDefault();
+    const inputFile = document.getElementById("create-server-image");
+    const selectedFile = inputFile.files[0];
+
+    if (selectedFile) {
+      const allowedImageTypes = ["image/jpeg", "image/png", "image/gif"]; // Tipe MIME gambar yang diizinkan
+
+      if (allowedImageTypes.includes(selectedFile.type)) {
+        // Tipe MIME sesuai dengan yang diizinkan
+        const imageUrl = URL.createObjectURL(selectedFile);
+        setServerImageData(selectedFile);
+        setServerImage(imageUrl);
+      } else {
+        // Tipe MIME tidak sesuai dengan yang diizinkan
+        console.log("File yang diunggah bukan gambar.");
+        // Tampilkan pesan kesalahan kepada pengguna atau lakukan tindakan yang sesuai.
+      }
+    }
   }
 
   return (
@@ -679,12 +721,25 @@ function Home() {
               <div className="menu-content create-content">
                 <div className="preview-item">
                   <div className="preview-image">
-                    <img src="" alt="" />
-                    <p>Upload</p>
-                    <input type="file" />
+                    <img
+                      onClick={clickCraeteUserInputImage}
+                      src={serverImage ? serverImage : bubbleServer}
+                      alt=""
+                    />
+                    <FontAwesomeIcon
+                      onClick={ClosePopup}
+                      className="icon"
+                      icon={faPlusCircle}
+                    />
+                    <p>UPLOAD</p>
+                    <input
+                      id="create-server-image"
+                      type="file"
+                      onChange={(e) => selectUserInputImage(e)}
+                    />
                   </div>
                   <div className="data">
-                    <div className="name">{}'s Server</div>
+                    <div className="name">Server Name</div>
                     <div className="tagline">Server Tagline</div>
                   </div>
                 </div>
@@ -697,7 +752,7 @@ function Home() {
                   ) : (
                     <div></div>
                   )}
-                  <label htmlFor="servername">Name*</label>
+                  <label htmlFor="servername">Server Name*</label>
                   <input
                     type="text"
                     id="servername"
@@ -706,7 +761,7 @@ function Home() {
                   />
                 </div>
                 <div className="input-form">
-                  <label htmlFor="servertagline">Tagline</label>
+                  <label htmlFor="servertagline">Server Tagline</label>
                   <input
                     type="text"
                     id="servertagline"
@@ -757,7 +812,10 @@ function Home() {
                       className="preview-item "
                     >
                       <div className="preview-image">
-                        <img src={row.image_url} alt="" />
+                        <img
+                          src={`${apiURL}/server/display/${row.image_url}`}
+                          alt=""
+                        />
                       </div>
                       <div className="data">
                         <div className="name">{row.name}</div>
@@ -781,7 +839,7 @@ function Home() {
                 <div className="search">
                   <FontAwesomeIcon className="icon" icon={faSearch} />
 
-                  <input type="text" placeholder="Find Community" />
+                  <input type="text" placeholder="Search" />
                 </div>
               </div>
             </div>
@@ -794,7 +852,12 @@ function Home() {
                 <p>Dicovery new server</p>
               </div>
               <div className="menu-content join-content">
-                <img src={popupJoinDetail.image_url} alt="" />
+                {popupJoinDetail.image_url && (
+                  <img
+                    src={`${apiURL}/server/display/${popupJoinDetail.image_url}`}
+                    alt=""
+                  />
+                )}
               </div>
               <div className="menu-footer double-button">
                 <div onClick={OpenDiscover} className="back">
@@ -822,7 +885,16 @@ function Home() {
           </div>
           <div className="full-menu server-view hidden" id="server-view">
             <div className="server-detail">
-              <img src={selectedRightClickServer.image_url} alt="" />
+              {selectedRightClickServer.image_url && (
+                <img
+                  src={
+                    apiURL +
+                    "/user/profil/" +
+                    selectedRightClickServer.image_url
+                  }
+                  alt=""
+                />
+              )}
               <div className="detail">
                 <h1>{selectedRightClickServer.name}</h1>
                 <h4>{selectedRightClickServer.tag_line}</h4>
@@ -838,7 +910,10 @@ function Home() {
                 <div className="list">
                   {MemberData.Members.map((row, index) => (
                     <div className="item" key={index}>
-                      <img src={row.user.image_url} alt="" />
+                      <img
+                        src={apiURL + "/user/profil/" + row.user.image_url}
+                        alt=""
+                      />
                       <div className="data">
                         <h2>{row.user.username}</h2>
                         <p>{row.role}</p>
@@ -886,10 +961,7 @@ function Home() {
               <div className="item">
                 <p>Pin Messages</p>
               </div>
-              <div
-                onClick={(e) => LeaveServer(selectedRightClickServer)}
-                className="item"
-              >
+              <div onClick={(e) => logoutHandler()} className="item">
                 <p>Logout</p>
               </div>
             </div>

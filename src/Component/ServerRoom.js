@@ -1,4 +1,5 @@
 import React from "react";
+import { apiURL } from "../Api";
 
 function ServerRoom(props) {
   // let win = sessionStorage;
@@ -19,7 +20,7 @@ function ServerRoom(props) {
             >
               <div className={`unreaded-count ${row.unReadedCount > 0 ? "" : "hidden"}`}>{row.unReadedCount}</div>
               <div className="bubble">
-                <img src={row.image_url} alt="" className="server-display" />
+                <img src={`${apiURL}/server/display/${row.image_url}`} alt="" className="server-display" />
                 <div className="server-data">
                   <h1>{row.name}</h1>
                   <p>{row.description}</p>

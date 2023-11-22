@@ -14,7 +14,7 @@ const ChatRoom = forwardRef((props, ref) => {
     id: "",
     name: "a",
     tagline: "a",
-    image: "v",
+    image: "",
     unReadedCount: 0,
   }); //DATA SERVER ON THE HEADER
 
@@ -41,9 +41,7 @@ const ChatRoom = forwardRef((props, ref) => {
       props.selectedLeftClickServer,
       inputValue
     )
-      .then((data) => {
-
-      })
+      .then((data) => {})
       .catch((err) => {
         console.log(err);
       });
@@ -52,7 +50,7 @@ const ChatRoom = forwardRef((props, ref) => {
     props.socket.emit("sendMessage", {
       serverRoomId: props.selectedLeftClickServer,
       message: inputValue,
-      username: props.webData.user_name
+      username: props.webData.user_name,
     });
 
     //INSERT TO GLOBAL WEBDATA
@@ -73,9 +71,8 @@ const ChatRoom = forwardRef((props, ref) => {
       ...prevData,
       unReadedCount: 0,
     }));
-    
-
   }
+
 
   //HANDLE ENTER LISTENER
   function handleKeyDown(event) {
@@ -117,7 +114,7 @@ const ChatRoom = forwardRef((props, ref) => {
           name: element.user_name,
           yours: props.webData.user_id === element.user_id ? true : false,
           profiledisplay: element.user_image,
-          profiledisplay_key : 0,
+          profiledisplay_key: 0,
           message: element.message,
         });
       });
@@ -144,7 +141,6 @@ const ChatRoom = forwardRef((props, ref) => {
 
     //CALLED WHEN SOMEONE CHATING YOU
     newChat(message) {
-
       // const previewProfilDisplayKey = chatData.find((c) => c.user_id === message.user_id);
 
       //CHECKING IF YOU ARE ON SERVER - CREATE CHAT ITEM
@@ -173,8 +169,6 @@ const ChatRoom = forwardRef((props, ref) => {
 
         //SET READED TO DATABASE
         hit_readMessage(win.getItem("token"), message.server_id);
-
-
       } //IF NO = SPAWN NOTIFICATION
       else {
         props.spawnMessageNotification(message);
@@ -182,33 +176,35 @@ const ChatRoom = forwardRef((props, ref) => {
       }
     },
 
-    updateOwnChat(newData){
-      const updatedChatData = chatData.map(chat => {
+    updateOwnChat(newData) {
+      const updatedChatData = chatData.map((chat) => {
         if (chat.yours) {
           return { ...chat, name: newData.username };
         } else {
           return chat; // Kembalikan objek aslinya jika kondisi if tidak terpenuhi
         }
       });
-      
+
       setChatData(updatedChatData);
-      
-      
+
       // console.log(serverData);
     },
 
-    updateOtherChat(newData){
-
-      const updatedChatData = chatData.map(chat => {
+    updateOtherChat(newData) {
+      const updatedChatData = chatData.map((chat) => {
         if (chat.user_id === newData.newData._id) {
-          return { ...chat, name: newData.newData.username, profiledisplay_key: (chat.profiledisplay_key + 1) };
+          return {
+            ...chat,
+            name: newData.newData.username,
+            profiledisplay_key: chat.profiledisplay_key + 1,
+          };
         } else {
           return chat; // Kembalikan objek aslinya jika kondisi if tidak terpenuhi
         }
       });
-      console.log(updatedChatData)
+      console.log(updatedChatData);
       setChatData(updatedChatData);
-    }
+    },
   }));
 
   //ELEMENT
@@ -245,7 +241,19 @@ const ChatRoom = forwardRef((props, ref) => {
           className={`chat-item ${item.yours ? "yours" : ""}`}
         >
           <div className="bubble">
-            <img src={apiURL + "/user/profil/" +  item.profiledisplay + `?v=${!item.yours ? (item.profiledisplay_key) :  (props.webData.user_image_key)}`} alt="" />
+            <img
+              src={
+                apiURL +
+                "/user/profil/" +
+                item.profiledisplay +
+                `?v=${
+                  !item.yours
+                    ? item.profiledisplay_key
+                    : props.webData.user_image_key
+                }`
+              }
+              alt=""
+            />
             <div className="form">
               <div className="name">{item.name}</div>
               <div className="message">{item.message}</div>
@@ -260,7 +268,14 @@ const ChatRoom = forwardRef((props, ref) => {
     <div className="room-content">
       <div className="room-container hidden" id="room-container">
         <div className="top">
-          <img src={serverData.image} alt="" className="server-display" />
+          {serverData.image && (
+            <img
+              src={apiURL + "/user/profil/" + serverData.image}
+              alt=""
+              className="server-display"
+            />
+          )}
+
           <div className="server-data">
             <div className="server-title">{serverData.name}</div>
             <p className="server-member">{serverData.tagline}</p>

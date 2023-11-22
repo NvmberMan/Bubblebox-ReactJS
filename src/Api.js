@@ -1,7 +1,13 @@
 import axios from "axios";
 
-export const apiURL = "http://localhost:3001"
-
+export const apiURL = "https://12eb-158-140-191-47.ngrok-free.app"
+export const CONFIG =   {
+    headers:{
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true' 
+    }
+}; 
 
 
 export const hit_login = async (email, pass) => {
@@ -29,22 +35,26 @@ export const hit_register = async (username, email, pass, repass, checkbox) => {
 export const hit_getAllServer = async (token) => {
     const data = await axios.get(`${apiURL}/server`, {
         headers:{
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
+            ...CONFIG.headers
         }
     });
 
     return data;
 }
 
-export const hit_createServer = async (token, name, tag_line, description) => {
+export const hit_createServer = async (token, name, tag_line, description,  Image = null) => {
+    console.log(Image)
     const data = await axios.post(`${apiURL}/server/create`, {
         name: name,
         tag_line,
-        description
+        description,
+        Image
     }, 
     {
         headers:{
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
         }
     });
 
@@ -93,7 +103,8 @@ export const hit_discover = async (token) => {
     const data = await axios.get(`${apiURL}/server/discover`, 
     {
         headers:{
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
+            ...CONFIG.headers
         }
     });
 
@@ -144,13 +155,12 @@ export const hit_readMessage = async (token, server_id) => {
 }
 
 export const hit_getWebData = async (token) => {
-    const data = await axios.get(`${apiURL}/message/data`,
-    {
-        headers:{
-            Authorization: `Bearer ${token}`
-        }
+    const data = await axios.get(`${apiURL}/message/data`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            ...CONFIG.headers
+        },
     });
-
     return data;
 }
 

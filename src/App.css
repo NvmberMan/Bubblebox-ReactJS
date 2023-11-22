@@ -5,7 +5,7 @@ body {
       sans-serif; */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--purple);
+  background-color: var(--purple-light2);
   overflow: hidden;
   /* font-family: "Jost", sans-serif; */
 }
@@ -188,21 +188,21 @@ body {
 }
 
 .server-top .earth {
-  background-image: url("./Assets/Img/Application/Earth.png");
-  height: 140px;
-  width: 140px;
+  background-image: url("./Assets/Img/Application/Logo.png");
+  height: 210px;
+  width: 210px;
   background-size: cover;
   position: absolute;
-  margin-left: -40px;
-  margin-top: -25px;
+  margin-left: -60px;
+  margin-top: -50px;
   cursor: pointer;
   transition: 0.3s;
   pointer-events: all;
 }
 
 .server-top .earth:hover {
-  transform: scale(1.05);
-  transform: rotate(90deg);
+  transform: scale(1.02);
+  /* transform: rotate(90deg); */
 }
 
 .server-top .discover {
@@ -880,6 +880,8 @@ body {
   padding-left: 10px;
   border: 2px solid transparent;
   transition: 0.3s;
+  cursor:text;
+
 }
 .popup-menu .menu-content .input-form textarea {
   width: 100%;
@@ -920,30 +922,64 @@ body {
 .popup-menu .menu-content .preview-item .preview-image {
   width: 85px;
   height: 85px;
-  background-color: var(--purple);
+  background-color: var(--white);
   border-radius: 50%;
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  transition: 0.3s;
+}
+
+.popup-menu .menu-content .preview-item .preview-image:hover img{
+  opacity: 0.5;
+
+}
+
+.popup-menu .menu-content .preview-item .preview-image:hover p{
+  opacity: 1;
+}
+
+.popup-menu .menu-content .preview-item .preview-image .icon{
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 25px;
+  margin-right: -2px;
+  color: var(--purple);
+  border-radius: 50%;
+  border: 2px solid var(--white-smoke);
+  background-color: var(--white-smoke);
 }
 .popup-menu .menu-content .preview-item .preview-image input {
   display: none;
 }
 .popup-menu .menu-content .preview-item .preview-image p {
   position: absolute;
-  color: var(--white-smoke);
+  color: var(--purple-light);
+  font-weight: 900;
   font-size: 13px;
   pointer-events: none;
+  transition: 0.3s;
+  opacity: 0;
+}
+
+.popup-menu .menu-content .preview-item .preview-image p.hidden{
+  display: none;
 }
 .popup-menu .menu-content .preview-item .preview-image img {
   width: 100%;
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-}
+  transition: 0.3s;
 
+}
+.popup-menu .menu-content .input-form input
+{
+  color: var(--purple);
+}
 .popup-menu .menu-content .input-form input:focus {
   border: 2px solid var(--purple-light);
 }
@@ -973,14 +1009,16 @@ body {
 }
 
 .popup-menu.discover .menu-absolute .search {
-  margin-top: 20px;
-  margin-left: 80px;
-  width: 220px;
-  position: relative;
+  margin-bottom: 7px;
+  margin-right: 20px;
+  position: absolute;
   display: flex;
   align-items: center;
   height: 40px;
   pointer-events: all;
+  width: fit-content;
+  right: 0;
+  bottom: 0;
 }
 .popup-menu.discover .menu-absolute .search input {
   height: 100%;
@@ -988,6 +1026,20 @@ body {
   border-radius: 50px;
   padding-left: 40px;
   color: var(--white);
+  width: 110px;
+  cursor: text;
+  transition: 0.3s;
+  border: 2px solid transparent;
+  padding-right: 12px;
+}
+
+.popup-menu.discover .menu-absolute .search input:hover{
+  width: 200px;
+}
+
+.popup-menu.discover .menu-absolute .search input:focus{
+  width: 200px;
+  border: 2px solid var(--pink);
 }
 
 .popup-menu.discover .menu-absolute .search .icon {
@@ -996,8 +1048,12 @@ body {
   margin-left: 13px;
 }
 
+.popup-menu.discover  .menu-footer{
+  /* padding-top: 10px; */
+}
+
 .popup-menu.discover .menu.discover-menu {
-  width: 80%;
+  width: 50%;
   min-height: 600px;
   transition: 0.3s;
 }
@@ -1010,6 +1066,7 @@ body {
   padding: 0;
   justify-content: start;
   padding: 30px 30px;
+  gap: 3px;
 }
 
 .popup-menu.discover .menu.discover-menu .discover-content .list {
@@ -1018,10 +1075,9 @@ body {
   flex-direction: row;
   justify-content: start;
   flex-wrap: wrap;
-  gap: 10px;
 }
 .popup-menu.discover .menu.discover-menu .discover-content .list .preview-item {
-  max-width: 49%;
+  width: 100%;
   cursor: pointer;
   transition: 0.3s;
   background-color: var(--purple);

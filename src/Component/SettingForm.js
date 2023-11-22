@@ -112,7 +112,10 @@ const SettingForm = forwardRef((props, ref) => {
       user_phone: props.webData.user_phone,
       user_image: null,
     });
-    setProfilImage(apiURL + "/user/profil/" + props.webData.user_image);
+    setProfilImage({
+      ...profilImage,
+      url: apiURL + "/user/profil/" + props.webData.user_image,
+    });
   }
 
   //APPLY UPDATING DATA TO DATABASE
@@ -134,18 +137,16 @@ const SettingForm = forwardRef((props, ref) => {
         );
         props.updateOwnChat(data.data);
         props.socket.emit("updateUser", {
-          newData: data.data
+          newData: data.data,
         });
 
-        if(accountData.user_image)
-        {
+        if (accountData.user_image) {
           const imageUrl = URL.createObjectURL(accountData.user_image);
           setProfilImage({
             key: profilImage.key + 1,
             url: imageUrl,
           });
         }
-
       })
       .catch((err) => {
         console.log(err);
@@ -237,7 +238,7 @@ const SettingForm = forwardRef((props, ref) => {
   }));
 
   return (
-    <div className="admin-form" id="setting-form">
+    <div className="admin-form hidden" id="setting-form">
       <div className="admin-nav">
         <div className="backbutton" onClick={closeSettingForm}>
           <FontAwesomeIcon className="icon" icon={faArrowLeft} />
